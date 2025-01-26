@@ -1,33 +1,40 @@
 #include <iostream>
 #include "pesquisaSequencial.h"
+#include <chrono>
 
 bool buscaBinaria(TipoRegistro pagina[], int qtdItens, int chave, int pEsq, int pDir, int pMeio, TipoRegistro *registro, int *cont) {
 
     if(pEsq > pDir)
         return false;
-
-    if(chave > pagina[pMeio].chave)
+    
+    (*cont)++; 
+    if(chave > pagina[pMeio].chave) {
         pEsq = pMeio + 1;
-    else if (chave < pagina[pMeio].chave)
-        pDir = pMeio - 1;
-    else if (chave == pagina[pMeio].chave) {
-        *registro = pagina[pMeio];
-        return true;
+    } 
+    else {
+        (*cont)++; 
+        if (chave < pagina[pMeio].chave) {
+            pDir = pMeio - 1;
+        } 
+        else {
+            (*cont)++; 
+            *registro = pagina[pMeio];
+            return true;
+        }
     }
 
     pMeio = (pDir + pEsq) / 2;
-    (*cont)++;
 
     return buscaBinaria(pagina, qtdItens, chave, pEsq, pDir, pMeio, registro, cont);
-
 }
 
-bool pesquisa(int menorChaveDaPagina[], int tam, TipoRegistro *registroBuscado, FILE *arq, int *cont) {
+bool pesquisa(int menorChaveDaPagina[], int tam, TipoRegistro *registroBuscado, FILE *arq, int *cont, int *n_buscas_pre, int *nTransferencias_pes) {
 
     int qtdItens, desloc, numeroDaPagina = 0;
     TipoRegistro pagina[REGISTROSPAGINA];
 
     while(numeroDaPagina < tam && menorChaveDaPagina[numeroDaPagina] <= registroBuscado->chave) 
+        n_buscas_pre++;
         numeroDaPagina++; // busca pela pagina onde o item pode estar
 
     if (numeroDaPagina == 0) 
@@ -47,6 +54,8 @@ bool pesquisa(int menorChaveDaPagina[], int tam, TipoRegistro *registroBuscado, 
     desloc = (numeroDaPagina-1) * REGISTROSPAGINA * sizeof(TipoRegistro); /* calcula o tamanho do deslocamento a ser feito no arquivo */
     fseek(arq, desloc, SEEK_SET);
     fread(&pagina, sizeof(TipoRegistro), qtdItens, arq);
+    // qtd de transferencias para a memoria principal
+    nTransferencias_pes++;
 
     int pEsq = 0, pDir = qtdItens - 1, pMeio = pDir / 2; 
     return buscaBinaria(pagina, qtdItens, registroBuscado->chave, pEsq, pDir, pMeio, registroBuscado, cont);
