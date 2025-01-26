@@ -1,147 +1,250 @@
 #include <iostream>
 using namespace std;
-#define M 2
+#define M 2// Ordem mínima (t)
 
-typedef int TipoChave;
+// Definição das estruturas
+typedef long TipoChave;
 
-typedef struct {
-    TipoChave chave;
-    /* demais componentes do registro */
+typedef struct TipoRegistro {
+    TipoChave Chave;
 } TipoRegistro;
 
-typedef struct TipoPagina* pPagina;
+typedef struct TipoPagina* TipoApontador;
 
 typedef struct TipoPagina {
-    short n;
-    TipoRegistro r[M];
-    pPagina p[M+1];
+    short n; // Número de chaves no nó
+    TipoRegistro r[2 * M ]; // Array de registros (chaves)
+    TipoApontador p[2 * M + 1]; // Array de ponteiros para filhos
 } TipoPagina;
 
-void arvoreInicia(pPagina pNav) {
-    pNav = NULL;
-}
 
-bool pesquisa(TipoRegistro *registro, pPagina pNav) {
-    int i = 1; /* variavel auxiliar para acessar os vetores de registros e ponteiros */
+// Função para inserir em uma página que não está cheia. Insere no lugar correto, e aponta tambem
+void InsereNaPagina(TipoApontador Ap, TipoRegistro Reg, TipoApontador ApDir) {
+    short NaoAchouPosicao; //se nao for recebe 0
+    int k;
+    k = Ap->n;
+    NaoAchouPosicao = (k > 0);
 
-    if (pNav == NULL) /* condicional para caso a arvore esteja vazia OU o registro buscado nao existe na arvore */
-        return false;
-    
-
-    while( i < pNav->n && registro->chave > pNav->r[i-1].chave) /* realiza a pesquisa sequencial no vetor registros na pagina */
-        i++;
-
-    if (registro->chave == pNav->r[i-1].chave) { /* chave encontrada */
-        *registro = pNav->r[i-1];
-        return true;
-    }
-    
-    if (registro->chave < pNav->r[i-1].chave) /* chave nao encontrada, segue filho a esquerda, pois a chave eh menor */
-        return pesquisa(registro, pNav->p[i-1]);
-    else    /* segue filho a direita */
-        return pesquisa(registro, pNav->p[i]);
-}
-
-void navegaArvoreB(pPagina pNav) {
-    int i = 0;
-
-    if (pNav == NULL) return;
-
-    while(i <= pNav->n) {
-        navegaArvoreB(pNav->p[i]);
-        if(i != pNav->n)
-            std::cout << pNav->r[i].chave << " ";
-        i++;
-    }
-}
-
-void InsereNaPagina(pPagina Ap, TipoRegistro reg, pPagina ApDir) {
-    int k = Ap->n;
-    while(k > 0) {
-
-        if(reg.chave >= Ap->r[k-1].chave) {
-            break;
+    while (NaoAchouPosicao)
+    {   
+        if (Reg.Chave >= Ap->r[k-1].Chave) //Verifica se oq eu quero add é maior do q o maior atual
+        {
+            NaoAchouPosicao = false; 
+            break;           
         }
-
         Ap->r[k] = Ap->r[k-1];
-        Ap->p[k+1] = Ap->p[k];
-
-        k--;
+        Ap->p[k + 1] = Ap->p[k];
+        k--; //Se esta aqui entao a chave nao é maior
+        if (k < 1) NaoAchouPosicao = false;//entao, achou posicao
     }
-
-    Ap->r[k] = reg;
-    Ap->p[k+1] = ApDir;
+    Ap->r[k] = Reg; //k é a posicao correta
+    Ap->p[k + 1] = ApDir;// algumas vezes ApDir vai ser nulo
     Ap->n++;
 }
 
-void ins(TipoRegistro reg, pPagina pNav, bool *cresceu, TipoRegistro *regRetorno, pPagina *ApRetorno) {
-
-    long i = 1, j;
-    pPagina ApTemp;
-
-    if (pNav == NULL) { /* arvore esta vazia: deve criar pagina raiz, portanto cresceu eh true. Alem disso, tambem indica quando uma pagina folha foi alcancada */
-        *cresceu = true;
-        *regRetorno = reg;
-        *ApRetorno = NULL;
-
-        return;
-    }
-
-    while (i < pNav->n && reg.chave > pNav->r[i-1].chave) 
-        i++;
-
-    if(reg.chave == pNav->r[i-1].chave) {
-        cout << "Registro ja esta presente!\n";
-        *cresceu = false;
-        return;
-    }
-
-    if(reg.chave < pNav->r[i-1].chave) i--; /* calcula para qual dos filhos devemos prosseguir na arvore: esquerda ou direita */
-    ins(reg, pNav->p[i], cresceu, regRetorno, ApRetorno); 
-
-    /* uma vez que uma chamada recursiva eh finalizada por meio do return, a chamada anterior segue daqui: */
-    if(*cresceu == false) return; // se cresceu for falso, nenhuma nova manipulacao precisa ser feita na pagina
-
-    if(pNav->n < M) { /* pagina possui espaco para novos registros */
-        InsereNaPagina(pNav, *regRetorno, *ApRetorno);
-        *cresceu = false;
-        return;
-    }
-    /* caso haja overflow, ou seja, a pagina ja esteja cheia, uma nova pagina eh criada para iniciar o processo de divisao dos registros */
-    ApTemp = (pPagina) malloc(sizeof(TipoPagina));
-    ApTemp->n = 0;
-    ApTemp->p[0] = NULL;
-
-    if (i < (M/2)+1) {
-        InsereNaPagina(ApTemp, pNav->r[M-1], pNav->p[M]);
-        pNav->n--;
-        InsereNaPagina(pNav, *regRetorno, *ApRetorno);
-    } else
-        InsereNaPagina(ApTemp, *regRetorno, *ApRetorno);
+/* Função auxiliar para inserção. Aqui ela basicamente percorre
+a arvore inteira procurando um lugar para inserir o 
+RegChave */
+void Ins(TipoRegistro Reg, TipoApontador Ap, short *Cresceu, 
+         TipoRegistro *RegRetorno, TipoApontador *ApRetorno) 
+{
     
-    for(j = (M/2)+2; j <= M; j++)
-        InsereNaPagina(ApTemp, pNav->r[j-1], pNav->p[j]);
-    
-    pNav->n = M; 
-    ApTemp->p[0] = pNav->p[(M/2)+1];
-    *regRetorno = pNav->r[M/2];
-    *ApRetorno = ApTemp;
+    long i = 1; long j;
+    TipoApontador ApTemp;
 
+    // Verifica se a arvore esta vazia.
+    if (Ap == nullptr) 
+    { // Se sim, cria a pagina raiz. Alem disso, quando der nulo  
+     //quer dizer que chegou numa pagina folha.
+        *Cresceu = true;
+        (*RegRetorno) = Reg;
+        (*ApRetorno) = nullptr;
+        return;
+    }
+
+    // While como na pesquisa. Procura o item na pagina.
+    while (i < Ap->n && Reg.Chave > Ap->r[i-1].Chave) i++; 
+    if (Reg.Chave == Ap->r[i-1].Chave) 
+    {
+        //Esse if verifica se a chave já existe
+        *Cresceu = false; // Chave já existe 
+        return;
+    }
+
+    /* Esse if determina para qual lado dos ponteiros a
+    chamada recursiva vai. Se o reg.chave for menor, 
+    decrementa e vai para um ponteiro menor e vice-versa    */
+    if(Reg.Chave < Ap->r[i - 1].Chave) i--;
+    // Chamada recursiva
+    Ins(Reg, Ap->p[i], Cresceu, RegRetorno, ApRetorno);
+    
+    //Essa parte só é acessada quando começa a desempilhar.
+    if (!*Cresceu) 
+    {
+        //Esse cresceu determina quando o programa termina
+        //Enquanto cresceu for verdadeiro, tem coisas a fazer.
+        return;
+    }
+
+    if (Ap->n < 2 * M) //verifica se a pagina ta completa
+    //se sim, tem que fazer a divisão
+    {
+        InsereNaPagina(Ap, *RegRetorno, *ApRetorno);
+        *Cresceu = false;
+        return;
+    } 
+    //CHEGOU AQUI, COMEÇA DIVISAO
+    // Overflow (pagina completa, tem que dividir)
+    //Aqui está criando uma nova pagina
+    ApTemp = (TipoApontador)malloc(sizeof(TipoPagina));
+    ApTemp->n = 0; 
+    ApTemp->p[0] = nullptr;
+    
+    
+    //Esse if verifica se vai ser inserir na pagina que ja existe
+    //ou vai para a nova pagina
+    if (i < M + 1) //i é o valor aonde eu tenho que inserir(lembrando
+    //que o valor que quero inserir é o reg retorno/reg) ou seja, o i se trata da posicao do reg
+    {
+    /* Esse if meio que já faz a comparação de maior e menor
+    se baseando apenas no i (pelo que entendi)*/
+        InsereNaPagina(ApTemp, Ap->r[2 * M - 1], Ap->p[2 * M]);//pega o ultimo elemento e taca na temp
+        Ap->n--;
+        InsereNaPagina(Ap, *RegRetorno, *ApRetorno);//Regretorno é um valor que tava mais baixo e ta subindo
+    }
+    else 
+    {
+        InsereNaPagina(ApTemp, *RegRetorno, *ApRetorno);
+    }
+
+    /*esse for faz com que um elemento dos maiores seja levado para a proxima pagina */
+   /*é obrigatorio ser dos maiores, pois os menores continuam na mesma*/
+    for(j = M + 2; j <= 2 * M; j++)
+        InsereNaPagina(ApTemp, Ap->r[j-1], Ap->p[j]);
+                /*apontador aptemp-> recebendo o mais a direita(pode ser null)*/
+    Ap->n = M; ApTemp->p[0] = Ap->p[M + 1]; /*ApTemp se trata da nova pagina. Ap é a anterior que fica com tamain M*/
+    //Esse Ap->n aqui em cima recebe recebe o tamanho da metade, já que foi dividido no meio
+    *RegRetorno = Ap->r[M]; *ApRetorno = ApTemp; //Elementos do meio
 }
 
-bool insere(TipoRegistro registro, pPagina *pNav) {
-    bool cresceu = false;
-    TipoRegistro registroRetorno;
-    pPagina ApRetorno, ApTemp;
+// Função principal de inserção
+void Insere(TipoRegistro Reg, TipoApontador* Ap) {
+    short Cresceu;
+    TipoRegistro RegRetorno;
+    TipoPagina *ApRetorno, *ApTemp;
 
-    ins(registro, *pNav, &cresceu, &registroRetorno, &ApRetorno);
+    Ins(Reg, *Ap, &Cresceu, &RegRetorno, &ApRetorno);
 
-    if (cresceu) { /* arvore cresce na altura pela raiz */
-        ApTemp = (TipoPagina *)malloc(sizeof(TipoPagina));
+    if (Cresceu) {
+        ApTemp = (TipoPagina*) malloc(sizeof(TipoPagina));
         ApTemp->n = 1;
-        ApTemp->r[0] = registroRetorno;
+        ApTemp->r[0] = RegRetorno;
         ApTemp->p[1] = ApRetorno;
-        ApTemp->p[0] = *pNav;
-        *pNav = ApTemp;
+        ApTemp->p[0] = *Ap; *Ap = ApTemp;
     }
+    //No final aptemp é atualizado com o novo endereço da raiz que foi criado
+}
+
+bool Pesquisa(TipoRegistro* x, TipoApontador Ap) {
+    if (Ap == nullptr) {
+        return false; // Chave não encontrada
+    }
+
+    long i = 1; // Inicialização de i
+
+    // Pesquisa sequencial para encontrar o intervalo desejado
+    while (i < Ap->n && x->Chave > Ap->r[i - 1].Chave) {
+        i++;
+    }
+
+    if (x->Chave == Ap->r[i - 1].Chave) {
+        *x = Ap->r[i - 1]; // Registro encontrado
+        return true;
+    }
+
+    if (x->Chave < Ap->r[i - 1].Chave) {
+        return Pesquisa(x, Ap->p[i - 1]); // Pesquisa no filho à esquerda
+    } 
+    else
+    {
+        return Pesquisa(x, Ap->p[i]); // Pesquisa no filho à direita
+    }
+}
+
+void imprimirArvore(TipoApontador Ap, int nivel = 0) {
+    if (Ap == nullptr) {
+        return;
+    }
+
+    // Imprime as chaves do nó atual
+    cout << "Nivel " << nivel << " (n = " << Ap->n << "): ";
+    for (int i = 0; i < Ap->n; i++) {
+        cout << Ap->r[i].Chave << " ";
+    }
+    cout << endl;
+
+    // Imprime os filhos recursivamente
+    for (int i = 0; i <= Ap->n; i++) {
+        imprimirArvore(Ap->p[i], nivel + 1);
+    }
+}
+
+void freeArvore(TipoApontador Ap) {
+    if (Ap == nullptr) {
+        return; // Se o nó for nulo, não há nada para liberar
+    }
+
+    // Libera os filhos recursivamente
+    for (int i = 0; i <= Ap->n; i++) {
+        freeArvore(Ap->p[i]);
+    }
+
+    // Libera o nó atual
+    delete Ap;
+}
+int main() {
+    TipoApontador raiz = nullptr;
+    TipoRegistro reg;
+
+    // Inserindo alguns registros na árvore
+    reg.Chave = 10;
+    Insere(reg, &raiz);
+
+    reg.Chave = 20;
+    Insere(reg, &raiz);
+
+    reg.Chave = 5;
+    Insere(reg, &raiz);
+
+    reg.Chave = 15;
+    Insere(reg, &raiz);
+
+    reg.Chave = 25;
+    Insere(reg, &raiz);
+
+    // Inserindo mais chaves para testar a divisão de nós
+    reg.Chave = 30;
+    Insere(reg, &raiz);
+
+    reg.Chave = 35;
+    Insere(reg, &raiz);
+
+    reg.Chave = 40;
+    Insere(reg, &raiz);
+
+    reg.Chave = 45;
+    Insere(reg, &raiz);
+
+    reg.Chave = 50;
+    Insere(reg, &raiz);
+
+    // Imprimindo a árvore
+    cout << "Estrutura da arvore B após inserções adicionais:" << endl;
+    imprimirArvore(raiz);
+
+    // Liberando a memória da árvore
+    freeArvore(raiz);
+    cout << "Arvore liberada da memoria." << endl;
+
+    return 0;
 }
