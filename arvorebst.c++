@@ -129,6 +129,17 @@ void Ins(TipoRegistro Reg, TipoApontador Ap, short *Cresceu,
         *RegRetorno = Ap->r[M]; *ApRetorno = ApTemp; //Elementos do meio
     }
 
+    //Nessa parte ja estou na pagina externa do possivel 
+     if (Ap == nullptr) //Verifica se a arvore esta vazia
+    { 
+        *Cresceu = true;
+        (*RegRetorno) = Reg;
+        (*ApRetorno) = nullptr;
+        return;
+    }
+
+
+
 }
 
 // Função principal de inserção
@@ -148,9 +159,6 @@ void Insere(TipoRegistro Reg, TipoApontador* Ap) {
     }
     //No final aptemp é atualizado com o novo endereço da raiz que foi criad
 
-
-        
-    }
     
     // Se nao for interna e estiver vazia, entao crio a pagina raiz.
     if (Ap == nullptr) 
@@ -222,7 +230,8 @@ void Insere(TipoRegistro Reg, TipoApontador* Ap) {
     /*esse for faz com que um elemento dos maiores seja levado para a proxima pagina */
    /*é obrigatorio ser dos maiores, pois os menores continuam na mesma*/
     for(j = M + 2; j <= 2 * M; j++)
-        InsereNaPagina(ApTemp, Ap->r[j-1], Ap->p[j]);
+        InsereNaPagina(ApTemp, Ap->r[j-1],// Se sim, cria a pagina raiz. Alem disso, quando der nulo  
+     //quer dizer que chegou numa pagina folha. Ap->p[j]);
                 /*apontador aptemp-> recebendo o mais a direita(pode ser null)*/
     Ap->n = M; ApTemp->p[0] = Ap->p[M + 1]; /*ApTemp se trata da nova pagina. Ap é a anterior que fica com tamain M*/
     //Esse Ap->n aqui em cima recebe recebe o tamanho da metade, já que foi dividido no meio
