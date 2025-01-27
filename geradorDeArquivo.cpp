@@ -2,7 +2,6 @@
 #include <string.h>
 #include <math.h>
 using namespace std;
-using namespace chrono;
 
 typedef struct {
     int chave;
@@ -10,7 +9,7 @@ typedef struct {
     char dado2[5000];
 } TipoRegistro;
 
-bool geraArqCrescente(int N, FILE *arqEscrita) {
+int geraArqAscendente(int N, FILE *arqEscrita) {
 
     for(int i = 0; i < N; i++) {
         TipoRegistro reg;
@@ -19,11 +18,12 @@ bool geraArqCrescente(int N, FILE *arqEscrita) {
     }
 
     fclose(arqEscrita);
-    return true;
+    cout << "Arquivo ascendente criado!\n";
+    return 0;
 
 }
 
-bool geraArqDecrescente(int N, FILE *arqEscrita) {
+int geraArqDecrescente(int N, FILE *arqEscrita) {
 
     for(int i = N; i > 0; i--) {
         TipoRegistro reg;
@@ -32,11 +32,12 @@ bool geraArqDecrescente(int N, FILE *arqEscrita) {
     }
 
     fclose(arqEscrita);
-    return true;
+    cout << "Arquivo decrescente criado!\n";
+    return 0;
 
 }
 
-bool geraArqDesordenado(int N, FILE *arqEscrita) {
+int geraArqDesordenado(int N, FILE *arqEscrita) {
 
     TipoRegistro *registros = (TipoRegistro*)malloc(N * sizeof(TipoRegistro));
 
@@ -58,7 +59,8 @@ bool geraArqDesordenado(int N, FILE *arqEscrita) {
     
     free(registros);
     fclose(arqEscrita);
-    return true;
+    cout << "Arquivo desordenado criado!\n";
+    return 0;
 
 }
 
@@ -70,38 +72,32 @@ int main (int argc, char *argv[]) {
     string arqTipo = string(argv[1]);
     int N;
 
-    cout << "Digite o numero de registros: \n";
+    cout << "Digite o numero de registros: ";
     cin >> N;
 
     FILE *arqEscrita;
     
-    
-    if(arqTipo == "-c") {
+    if(arqTipo == "-a") {
 
-        if ( (arqEscrita = fopen("registrosAscendente.bin", "wb")) == NULL ) {
-            cout << "Erro na criacao do arquivo.\n";
-            return 1;
-        }
-        geraArqCrescente(N, arqEscrita);
+        if ( (arqEscrita = fopen("registrosAscendente.bin", "wb")) == NULL ) 
+            cout << "\nErro na criacao do arquivo.\n";
+        else
+            geraArqAscendente(N, arqEscrita);
 
     } else if(arqTipo == "-d") {
 
-        if ( (arqEscrita = fopen("registrosDescrescente.bin", "wb")) == NULL ) {
-            cout << "Erro na criacao do arquivo.\n";
-            return 1;
-        }
-        geraArqDecrescente(N, arqEscrita);
+        if ( (arqEscrita = fopen("registrosDescrescente.bin", "wb")) == NULL ) 
+            cout << "\nErro na criacao do arquivo.\n";
+        else
+            geraArqDecrescente(N, arqEscrita);
 
     } else if(arqTipo == "-r") {
 
-        if ( (arqEscrita = fopen("registrosDesordenados.bin", "wb")) == NULL ) {
-            cout << "Erro na criacao do arquivo.\n";
-            return 1;
-        }
-        geraArqDesordenado(N, arqEscrita);
-
+        if ( (arqEscrita = fopen("registrosDesordenados.bin", "wb")) == NULL ) 
+            cout << "\nErro na criacao do arquivo.\n";
+        else
+            geraArqDesordenado(N, arqEscrita);
     }
-
-    return 0;
+    return 1;
 }
 
