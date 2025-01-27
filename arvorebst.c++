@@ -19,7 +19,7 @@ typedef struct TipoPagina {
     union {
         struct { // Estrutura para páginas internas
             int ni;                        // Número de chaves
-            TipoChave ri[M * 2];             // Chaves
+            TipoRegistro ri[M * 2];             // Chaves
             TipoApontador pi[M * 2 + 1];     // Ponteiros para filhos
         } U0;
         struct { // Estrutura para páginas externas
@@ -30,6 +30,17 @@ typedef struct TipoPagina {
 } TipoPagina;
 
 // Função para inserir em uma página que não está cheia. Insere no lugar correto, e aponta tambem
+
+void InsereNaPaginaInt(TipoApontador Ap, TipoRegistro Reg, TipoApontador ApDir) { //ApDir e o apontador do filho a direitra
+    short NaoAchouPosicao; //se nao for recebe 0
+    int k;
+    k = Ap->UU.U0.ni;
+    NaoAchouPosicao = (k > 0);
+
+    while (NaoAchouPosicao)
+    {   
+        if (Reg.Chave >= Ap->UU.U0.ri[k - 1].Chave) //Verifica se oq eu quero add é maior do q o maior atual
+
 void InsereNaPagina(TipoApontador Ap, TipoRegistro Reg, TipoApontador ApDir) { //ApDir e o apontador do filho a direitra
     bool NaoAchouPosicao; //se nao for recebe 0
     
@@ -39,10 +50,43 @@ void InsereNaPagina(TipoApontador Ap, TipoRegistro Reg, TipoApontador ApDir) { /
 
     while (NaoAchouPosicao) {   
         if (Reg.Chave >= Ap->UU.U1.re[k-1].Chave) //Verifica se oq eu quero add é maior do q o maior atual
+
         {
             NaoAchouPosicao = false; 
             break;           
         }
+
+        Ap->UU.U0.ri[k] = Ap->UU.U0.ri[k - 1];
+        Ap->UU.U0.pi[k + 1] = Ap->UU.U0.pi[k];
+        k--; //Se esta aqui entao a chave nao é maior
+        if (k < 1) NaoAchouPosicao = false;//entao, achou posicao
+    }
+    Ap->UU.U0.ri[k].Chave = Reg.Chave; //k é a posicao correta
+    Ap->UU.U0.pi[k + 1] = ApDir;// algumas vezes ApDir vai ser nulo
+    Ap->UU.U0.ni++;
+}
+
+
+void InsereNaPaginaExt(TipoApontador Ap, TipoRegistro Reg) { //ApDir e o apontador do filho a direitra
+    short NaoAchouPosicao; //se nao for recebe 0
+    int k;
+    k = Ap->UU.U1.ne;
+    NaoAchouPosicao = (k > 0);
+
+    while (NaoAchouPosicao)
+    {   
+        if (Reg.Chave >= Ap->UU.U1.re[k-1].Chave) //Verifica se oq eu quero add é maior do q o maior atual
+        {
+            NaoAchouPosicao = false; 
+            break;           
+        }
+        Ap->UU.U1.re[k] = Ap->UU.U1.re[k - 1];
+        k--; //Se esta aqui entao a chave nao é maior
+        if (k < 1) NaoAchouPosicao = false;//entao, achou posicao
+    }
+    Ap->UU.U1.re[k] = Reg; //k é a posicao correta
+    Ap->UU.U1.ne++;
+
         Ap->UU.U1.re[k] = Ap->UU.U1.re[k-1]; 
         k--; //Se esta aqui entao a chave nao é maior
         if (k < 1) NaoAchouPosicao = false;//entao, achou posicao
@@ -51,13 +95,13 @@ void InsereNaPagina(TipoApontador Ap, TipoRegistro Reg, TipoApontador ApDir) { /
     Ap->UU.U1.re[k] = Reg;
     Ap->UU.U1.ne++;
 
+
 }
 
 /* Função auxiliar para inserção. Aqui ela basicamente percorre
 a arvore inteira procurando um lugar para inserir o 
 RegChave */
-void Ins(TipoRegistro Reg, TipoApontador Ap, short *Cresceu, 
-         TipoRegistro *RegRetorno, TipoApontador *ApRetorno) 
+void Ins(TipoRegistro Reg, TipoApontador Ap, short *Cresceu, TipoRegistro *RegRetorno, TipoApontador *ApRetorno) 
 {
     
     long i = 1; long j;
@@ -65,14 +109,14 @@ void Ins(TipoRegistro Reg, TipoApontador Ap, short *Cresceu,
 
     if (Ap->Pt == Interna) //verifica se a pagina eh interna
     { 
-        while (i < Ap->UU.U0.ni && Reg.Chave > Ap->UU.U0.ri[i - 1]) i++;
+        while (i < Ap->UU.U0.ni && Reg.Chave > Ap->UU.U0.ri[i - 1].Chave) i++;
         
-        if (Reg.Chave == Ap->UU.U0.ri[i-1])//Se achar uma chave igual, chama recursivamente para o lado direito
+        if (Reg.Chave == Ap->UU.U0.ri[i-1].Chave)//Se achar uma chave igual, chama recursivamente para o lado direito
         {
             Ins(Reg, Ap->UU.U0.pi[i], Cresceu, RegRetorno, ApRetorno);
         }
 
-        if(Reg.Chave < Ap->UU.U0.ri[i - 1]) i--;
+        if(Reg.Chave < Ap->UU.U0.ri[i - 1].Chave) i--;
         // Chamada recursivamente para o lado que
         Ins(Reg, Ap->UU.U0.pi[i], Cresceu, RegRetorno, ApRetorno);
 
@@ -90,7 +134,7 @@ void Ins(TipoRegistro Reg, TipoApontador Ap, short *Cresceu,
         if (Ap->UU.U0.ni < 2 * M) //verifica se a pagina ta completa
         //se sim, tem que fazer a divisão
         {
-            InsereNaPagina(Ap, *RegRetorno, *ApRetorno);
+            InsereNaPaginaInt(Ap, *RegRetorno, *ApRetorno);
             *Cresceu = false;
             return;
         } 
@@ -108,26 +152,33 @@ void Ins(TipoRegistro Reg, TipoApontador Ap, short *Cresceu,
         {
         /* Esse if meio que já faz a comparação de maior e menor
         se baseando apenas no i (pelo que entendi)*/
+
+            InsereNaPaginaInt(ApTemp, Ap->UU.U0.ri[2 * M - 1], Ap->UU.U0.pi[2 * M]);//pega o ultimo elemento e taca na temp
+            Ap->UU.U0.ni;
+            InsereNaPaginaInt(Ap, *RegRetorno, *ApRetorno);//Regretorno é um valor que tava mais baixo e ta subindo
+
             InsereNaPagina(ApTemp, Ap->UU.U0.ri[2 * M - 1], Ap->p[2 * M]);//pega o ultimo elemento e taca na temp
             Ap->UU.U0.ni;
             InsereNaPagina(Ap, *RegRetorno, *ApRetorno);//Regretorno é um valor que tava mais baixo e ta subindo
+
         }
         else 
         {
-            InsereNaPagina(ApTemp, *RegRetorno, *ApRetorno);
+            InsereNaPaginaInt(ApTemp, *RegRetorno, *ApRetorno);
         }
 
         /*esse for faz com que um elemento dos maiores seja levado para a proxima pagina */
         /*é obrigatorio ser dos maiores, pois os menores continuam na mesma*/
         for(j = M + 2; j <= 2 * M; j++)
-            InsereNaPagina(ApTemp, Ap->r[j-1], Ap->p[j]);
+            InsereNaPaginaInt(ApTemp, Ap->UU.U0.ri[j-1], Ap->UU.U0.pi[j]);
                     /*apontador aptemp-> recebendo o mais a direita(pode ser null)*/
-        Ap->n = M; ApTemp->p[0] = Ap->p[M + 1]; /*ApTemp se trata da nova pagina. Ap é a anterior que fica com tamain M*/
+        Ap->UU.U0.ni = M; ApTemp->UU.U0.pi[0] = Ap->UU.U0.pi[M + 1]; /*ApTemp se trata da nova pagina. Ap é a anterior que fica com tamain M*/
         //Esse Ap->n aqui em cima recebe recebe o tamanho da metade, já que foi dividido no meio
-        *RegRetorno = Ap->r[M]; *ApRetorno = ApTemp; //Elementos do meio
+        *RegRetorno = Ap->UU.U0.ri[M]; *ApRetorno = ApTemp; //Elementos do meio
     }
 
-    //Nessa parte ja estou na pagina externa do possivel 
+
+    //Nessa parte ja estou na pagina externa da chave a ser adicionada 
      if (Ap == nullptr) //Verifica se a arvore esta vazia
     { 
         *Cresceu = true;
@@ -135,6 +186,9 @@ void Ins(TipoRegistro Reg, TipoApontador Ap, short *Cresceu,
         (*ApRetorno) = nullptr;
         return;
     }
+
+
+    if (Ap->UU.U1.ne < 2 * M)//Insere na pagina se ela nao estiver cheia
 
 }
 
@@ -186,53 +240,44 @@ void Insere(TipoRegistro Reg, TipoApontador* Ap) {
     
     //Essa parte só é acessada quando começa a desempilhar.
     if (!*Cresceu) 
-    {
-        //Esse cresceu determina quando o programa termina
-        //Enquanto cresceu for verdadeiro, tem coisas a fazer.
-        return;
-    }
 
-    if (Ap->n < 2 * M) //verifica se a pagina ta completa
-    //se sim, tem que fazer a divisão
     {
-        InsereNaPagina(Ap, *RegRetorno, *ApRetorno);
+        InsereNaPaginaExt(Ap, *RegRetorno);  
         *Cresceu = false;
         return;
     } 
-    //CHEGOU AQUI, COMEÇA DIVISAO
-    // Overflow (pagina completa, tem que dividir)
-    //Aqui está criando uma nova pagina
+
+    //Aqui começa a parte da divisao.
     ApTemp = (TipoApontador)malloc(sizeof(TipoPagina));
-    ApTemp->n = 0; 
-    ApTemp->p[0] = nullptr;
-    
-    
-    //Esse if verifica se vai ser inserir na pagina que ja existe
-    //ou vai para a nova pagina
-    if (i < M + 1) //i é o valor aonde eu tenho que inserir(lembrando
-    //que o valor que quero inserir é o reg retorno/reg) ou seja, o i se trata da posicao do reg
+    ApTemp->UU.U1.ne = 0; 
+
+     //Esse if verifica se vai ser inserir na pagina que ja existe ou vai para a nova pagina
+    if (i < M + 1)
     {
     /* Esse if meio que já faz a comparação de maior e menor
     se baseando apenas no i (pelo que entendi)*/
-        InsereNaPagina(ApTemp, Ap->r[2 * M - 1], Ap->p[2 * M]);//pega o ultimo elemento e taca na temp
-        Ap->n--;
-        InsereNaPagina(Ap, *RegRetorno, *ApRetorno);//Regretorno é um valor que tava mais baixo e ta subindo
+        InsereNaPaginaExt(ApTemp, Ap->UU.U1.re[2 * M - 1]);//pega o ultimo elemento e taca na temp (pag nova)
+        Ap->UU.U1.ne++;
+        InsereNaPaginaExt(Ap, *RegRetorno); // libera espaco nas 2 linhas acima e depois adiciona o Reg necessario
     }
     else 
     {
-        InsereNaPagina(ApTemp, *RegRetorno, *ApRetorno);
+        InsereNaPaginaExt(ApTemp, *RegRetorno); // Reg vem se for um dos 2 maiores
     }
 
-    /*esse for faz com que um elemento dos maiores seja levado para a proxima pagina */
-   /*é obrigatorio ser dos maiores, pois os menores continuam na mesma*/
+
     for(j = M + 2; j <= 2 * M; j++)
-        InsereNaPagina(ApTemp, Ap->r[j-1],// Se sim, cria a pagina raiz. Alem disso, quando der nulo  
-     //quer dizer que chegou numa pagina folha. Ap->p[j]);
-                /*apontador aptemp-> recebendo o mais a direita(pode ser null)*/
-    Ap->n = M; ApTemp->p[0] = Ap->p[M + 1]; /*ApTemp se trata da nova pagina. Ap é a anterior que fica com tamain M*/
-    //Esse Ap->n aqui em cima recebe recebe o tamanho da metade, já que foi dividido no meio
-    *RegRetorno = Ap->r[M]; *ApRetorno = ApTemp; //Elementos do meio
+        InsereNaPaginaExt(ApTemp, Ap->UU.U1.re[j-1]);
+
+    InsereNaPaginaExt(ApTemp, Ap->UU.U1.re[M]); //Insere o valor do meio na pagina da direita
+    Ap->UU.U1.ne = M - 1; //Esse Ap->n aqui em cima recebe recebe o tamanho da metade, já que foi dividido no meio
+
+    //Para subir, tenho que inserir numa pagina interna e apontar
+    InsereNaPaginaInt();
+    *RegRetorno = Ap->UU.U1.re[M]; *ApRetorno = ApTemp; //Aqui pega o valor do meio que vai subir
+
 }
+
 
 // Função de pesquisa
 bool Pesquisa(TipoRegistro *x, TipoApontador *Ap) {
@@ -242,8 +287,8 @@ bool Pesquisa(TipoRegistro *x, TipoApontador *Ap) {
 
     if ((*Ap)->Pt == Interna) { // Aqui pesquisa na pag interna
         i = 1;
-        while (i < Pag->UU.U0.ni && x->Chave > Pag->UU.U0.ri[i - 1]) i++; //pesquisa na pag
-        if (x->Chave < Pag->UU.U0.ri[i - 1]) //maior ou menor que o ultimo registro verificado
+        while (i < Pag->UU.U0.ni && x->Chave > Pag->UU.U0.ri[i - 1].Chave) i++; //pesquisa na pag
+        if (x->Chave < Pag->UU.U0.ri[i - 1].Chave) //maior ou menor que o ultimo registro verificado
             Pesquisa(x, &Pag->UU.U0.pi[i - 1]);
         else
             Pesquisa(x, &Pag->UU.U0.pi[i]); //se achar o valor, vai para o filho do lado direito
@@ -274,7 +319,7 @@ void Imprime(TipoApontador Ap, int Nivel) {
     cout << "Nível " << Nivel << ": ";
     if (Ap->Pt == Interna) {
         for (int i = 0; i < Ap->UU.U0.ni; i++) {
-            cout << Ap->UU.U0.ri[i] << " ";
+            cout << Ap->UU.U0.ri[i].Chave << " ";
         }
         cout << endl;
         for (int i = 0; i <= Ap->UU.U0.ni; i++) {
@@ -289,34 +334,32 @@ void Imprime(TipoApontador Ap, int Nivel) {
 }
 
 int main() {
-    // TipoApontador Arvore;
-    // Inicializa(&Arvore);
+    TipoApontador Arvore;
 
-    // TipoRegistro Reg;
 
-    // // Inserindo alguns registros
-    // Reg.Chave = 10;
-    // Insere(Reg, &Arvore);
+    TipoRegistro Reg;
 
-    // Reg.Chave = 20;
-    // Insere(Reg, &Arvore);
+    // Inserindo alguns registros
+    Reg.Chave = 10;
+    Insere(Reg, &Arvore);
 
-    // Reg.Chave = 15;
-    // Insere(Reg, &Arvore);
+    Reg.Chave = 20;
+    Insere(Reg, &Arvore);
 
-    // Reg.Chave = 5;
-    // Insere(Reg, &Arvore);
+    Reg.Chave = 15;
+    Insere(Reg, &Arvore);
 
-    // // Imprimindo a árvore
-    // cout << "Árvore B*:" << endl;
-    // Imprime(Arvore, 0);
+    Reg.Chave = 5;
+    Insere(Reg, &Arvore);
 
-    // // Pesquisando na árvore
-    // Reg.Chave = 15;
-    // Pesquisa(&Reg, Arvore);
+    // Imprimindo a árvore
+    cout << "Árvore B*:" << endl;
+    Imprime(Arvore, 0);
 
-    // Reg.Chave = 100;
-    // Pesquisa(&Reg, Arvore);
+    // Pesquisando na árvore
+    Reg.Chave = 15;
+    Pesquisa(&Reg, Arvore);
 
-    // return 0;
+    Reg.Chave = 100;
+    Pesquisa(&Reg, Arvore);
 }
