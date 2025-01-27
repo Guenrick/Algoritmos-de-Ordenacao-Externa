@@ -24,7 +24,7 @@ typedef struct TipoPagina {
         } U0;
         struct { // Estrutura para páginas externas
             int ne;                        // Número de registros
-            TipoRegistro re[M * 4];          // Registros armazenados
+            TipoRegistro re[M * 2];          // Registros armazenados
         } U1;
     } UU;
 } TipoPagina;
@@ -71,6 +71,7 @@ void InsereNaPaginaExt(TipoApontador Ap, TipoRegistro Reg) { //ApDir e o apontad
         k--; //Se esta aqui entao a chave nao é maior
         if (k < 1) NaoAchouPosicao = false;//entao, achou posicao
     }
+    cout << "Inseriu " << Reg.Chave << "\n";
     Ap->UU.U1.re[k] = Reg; //k é a posicao correta
     Ap->UU.U1.ne++;
 }
@@ -96,9 +97,17 @@ void Ins(TipoRegistro Reg, TipoApontador Ap, short *Cresceu, TipoRegistro *RegRe
 
     if (Ap->Pt == Interna) //verifica se a pagina eh interna
     { 
+
+        int i = 1;
+
+        while (i < Ap->UU.U0.ni && Reg.Chave > Ap->UU.U0.ri[i - 1]) i++;
+        
+        if (Reg.Chave == Ap->UU.U0.ri[i -1])//Se achar uma chave igual, chama recursivamente para o lado direito
+
         while (i < Ap->UU.U0.ni && Reg.Chave > Ap->UU.U0.ri[i - 1]) i++;
         
         if (Reg.Chave == Ap->UU.U0.ri[i-1])//Se achar uma chave igual, chama recursivamente para o lado direito
+
         {
             Ins(Reg, Ap->UU.U0.pi[i], Cresceu, RegRetorno, ApRetorno, ApPagAuxiliar);
         }
@@ -125,11 +134,11 @@ void Ins(TipoRegistro Reg, TipoApontador Ap, short *Cresceu, TipoRegistro *RegRe
             *Cresceu = false;
             return;
         } 
+
         //CHEGOU AQUI, COMEÇA DIVISAO POIS A PAGINA ESTA COMPLETA
         ApTemp = (TipoApontador)malloc(sizeof(TipoPagina));
         ApTemp->UU.U0.ni = 0;
         ApTemp->UU.U0.pi[0] = nullptr;
-        
         
 
         if (i < M + 1) 
@@ -148,16 +157,30 @@ void Ins(TipoRegistro Reg, TipoApontador Ap, short *Cresceu, TipoRegistro *RegRe
                 
         Ap->UU.U0.ni = M; 
         ApTemp->UU.U0.pi[0] = Ap->UU.U0.pi[M + 1]; 
+
+        RegRetorno->Chave = Ap->UU.U0.ri[M]; 
+
         *RegRetorno = Ap->UU.U0.ri[M]; 
+
         *ApRetorno = ApTemp; //Elementos do meio
 
     }
 
+
+
+    // se a pagina eh externa: 
+        
+    while (i < Ap->UU.U1.ne && Reg.Chave > Ap->UU.U1.re[i - 1].Chave) i++;
+    
+    if (i < (2 * M))//Insere na pagina se ela nao estiver cheia
+
     // se a pagina eh externa: 
 
     if (Ap->UU.U1.ne < 2 * M)//Insere na pagina se ela nao estiver cheia
+
     {
-        InsereNaPaginaExt(Ap, *RegRetorno);  
+        cout << "Entrou no insere pag externa\n";
+        InsereNaPaginaExt(Ap, Reg);  
         *Cresceu = false;
         return;
     } 
@@ -166,23 +189,30 @@ void Ins(TipoRegistro Reg, TipoApontador Ap, short *Cresceu, TipoRegistro *RegRe
     ApTemp = (TipoApontador)malloc(sizeof(TipoPagina));
     ApTemp->UU.U1.ne = 0; 
 
+    cout << "Iniciou processo de divisao pagina externa" << endl;
+    
+    
+
+
     while (i < Ap->UU.U1.ne && Reg.Chave > Ap->UU.U1.re[i - 1].Chave) i++;
 
+
      //Esse if verifica se vai ser inserir na pagina que ja existe ou vai para a nova pagina
+     cout << i << endl;
     if (i < M + 1)
     {
     /* Esse if meio que já faz a comparação de maior e menor
     se baseando apenas no i (pelo que entendi)*/
         InsereNaPaginaExt(ApTemp, Ap->UU.U1.re[2 * M - 1]);//pega o ultimo elemento e taca na temp (pag nova)
         Ap->UU.U1.ne++;
-        InsereNaPaginaExt(Ap, *RegRetorno); // libera espaco nas 2 linhas acima e depois adiciona o Reg necessario
+        InsereNaPaginaExt(Ap, Reg); // libera espaco nas 2 linhas acima e depois adiciona o Reg necessario
     }
     else 
     {
-        InsereNaPaginaExt(ApTemp, *RegRetorno); // Reg vem se for um dos 2 maiores
+        InsereNaPaginaExt(ApTemp, Reg); // Reg vem se for um dos 2 maiores
     }
 
-
+    cout << "Move ultimo valor da pagina atual para nova pagina\n";
     for(j = M + 2; j <= 2 * M; j++)
         InsereNaPaginaExt(ApTemp, Ap->UU.U1.re[j-1]);
 
@@ -200,6 +230,7 @@ void Ins(TipoRegistro Reg, TipoApontador Ap, short *Cresceu, TipoRegistro *RegRe
 
 // Função principal de inserção
 void Insere(TipoRegistro Reg, TipoApontador* Ap, TipoApontador* ApPagAuxiliar) {
+
     short Cresceu;
     TipoRegistro RegRetorno;
     TipoPagina *ApRetorno, *ApTemp;
@@ -212,100 +243,105 @@ void Insere(TipoRegistro Reg, TipoApontador* Ap, TipoApontador* ApPagAuxiliar) {
         ApTemp->UU.U0.ri[0] = RegRetorno.Chave;
         ApTemp->UU.U0.pi[1] = ApRetorno;
         ApTemp->UU.U0.pi[0] = *Ap;
+
+        ApTemp->Pt = Interna;
+        *Ap = ApTemp;
+        cout << "Primeira pagina interna\n";
+    }
+    // No final aptemp é atualizado com o novo endereço da raiz que foi criado 
+      
+    if ( Cresceu && (*ApPagAuxiliar)->Pt == Externa ) { //(aqui inicia a primeira pagina folha)
+
         *Ap = ApTemp;
     }
     // No final aptemp é atualizado com o novo endereço da raiz que foi criado 
 
     if (Cresceu && (*ApPagAuxiliar)->Pt == Externa ) { //(aqui inicia a primeira pagina folha)
+
         ApTemp = (TipoPagina*) malloc(sizeof(TipoPagina));
         ApTemp->UU.U1.ne = 1;
         ApTemp->UU.U1.re[0] = RegRetorno;
+        ApTemp->Pt = Externa;
         *Ap = ApTemp;
+
     }
 }
 
 // Função de pesquisa
 bool Pesquisa(TipoRegistro *x, TipoApontador *Ap) 
 {
-    int i;
-    TipoApontador Pag; //recebendo endereço da raiz
-    Pag = *Ap;
-
+    int i = 1;
     if ((*Ap)->Pt == Interna) { // Aqui pesquisa na pag interna
+
+        cout << "Pesquisa entrou na pagina interna\n";
+        while (i < (*Ap)->UU.U0.ni && x->Chave > (*Ap)->UU.U0.ri[i - 1]) i++; //pesquisa na pag
+        if (x->Chave < (*Ap)->UU.U0.ri[i - 1]) //maior ou menor que o ultimo registro verificado
+            Pesquisa(x, &(*Ap)->UU.U0.pi[i - 1]);
+
         i = 1;
         while (i < Pag->UU.U0.ni && x->Chave > Pag->UU.U0.ri[i - 1]) i++; //pesquisa na pag
         if (x->Chave < Pag->UU.U0.ri[i - 1]) //maior ou menor que o ultimo registro verificado
             Pesquisa(x, &Pag->UU.U0.pi[i - 1]);
+
         else
-            Pesquisa(x, &Pag->UU.U0.pi[i]); //se achar o valor, vai para o filho do lado direito
-        return;
+            Pesquisa(x, &(*Ap)->UU.U0.pi[i]); //se achar o valor, vai para o filho do lado direito
+        return true;
         //faz esse processo até encontrar uma pagina externa e ir para o while de baixo.
     }
 
-    i = 1; // Pesquisa na pagina externa
-    while (i < Pag->UU.U1.ne && x->Chave > Pag->UU.U1.re[i - 1].Chave)
+    // Pesquisa na pagina externa
+    while (i < (*Ap)->UU.U1.ne && x->Chave > (*Ap)->UU.U1.re[i - 1].Chave) {
         i++; //quando chego nessa parte ja estou na pagina certa do item (se ele existir)
-    if (x->Chave == Pag->UU.U1.re[i - 1].Chave)
+        cout << "Aqui imprime as chaves da pagina externa" << endl;
+
+    }
+
+    if (x->Chave == (*Ap)->UU.U1.re[i - 1].Chave)
     {
-        *x = Pag->UU.U1.re[i - 1]; //retorna o registro completo
+        cout << "Entrou aqui\n";
+        *x = (*Ap)->UU.U1.re[i - 1]; //retorna o registro completo
         return true;
     }
 
     else{
         // printf("TipoRegistro nao esta na arvore\n");
         return false;
-    }
-}
-
-
-// Função para imprimir a árvore
-void Imprime(TipoApontador Ap, int Nivel) {
-    if (Ap == nullptr) return;
-
-    cout << "Nível " << Nivel << ": ";
-    if (Ap->Pt == Interna) {
-        for (int i = 0; i < Ap->UU.U0.ni; i++) {
-            cout << Ap->UU.U0.ri[i].Chave << " ";
-        }
-        cout << endl;
-        for (int i = 0; i <= Ap->UU.U0.ni; i++) {
-            Imprime(Ap->UU.U0.pi[i], Nivel + 1);
-        }
-    } else {
-        for (int i = 0; i < Ap->UU.U1.ne; i++) {
-            cout << Ap->UU.U1.re[i].Chave << " ";
-        }
-        cout << endl;
-    }
+    
 }
 
 int main() {
-    TipoApontador Arvore;
+    TipoApontador Arvore = nullptr;
+    TipoApontador Auxiliar = (TipoApontador)malloc(sizeof(TipoPagina));
+
+    TipoRegistro *Reg;
+    Reg = (TipoRegistro*)malloc(sizeof(TipoRegistro));
+
+    // Exemplo de inserções
+    for (int i = 1; i <= 10; i++) {
+        Reg->Chave = i;
+        cout << "Adicionando registro: " << Reg->Chave << endl;
+        Insere(*Reg, &Arvore, &Auxiliar);
+    }
+    
+    cout << "Antes da pesquisa\n";
+  
+    Reg->Chave = 7;
+    fflush(stdin);
+    if (Pesquisa(Reg, &Arvore)) {
+        cout << "Chave encontrada: " << Reg->Chave << "\n";
+    } else {
+        cout << "Chave não encontrada.\n";
+    }
+
+    cout << "Depois da pesquisa\n";
+    free(Auxiliar);
+    free(Reg);
 
 
-    TipoRegistro Reg;
-
-    // Inserindo alguns registros
-    Reg.Chave = 10;
-    Insere(Reg, &Arvore);
-
-    Reg.Chave = 20;
-    Insere(Reg, &Arvore);
-
-    Reg.Chave = 15;
-    Insere(Reg, &Arvore);
-
-    Reg.Chave = 5;
-    Insere(Reg, &Arvore);
-
-    // Imprimindo a árvore
-    cout << "Árvore B*:" << endl;
-    Imprime(Arvore, 0);
-
-    // Pesquisando na árvore
-    Reg.Chave = 15;
-    Pesquisa(&Reg, Arvore);
+    return 0;
+}
 
     Reg.Chave = 100;
     Pesquisa(&Reg, Arvore);
 }
+
