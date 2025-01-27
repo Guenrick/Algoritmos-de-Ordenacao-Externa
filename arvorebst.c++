@@ -97,11 +97,17 @@ void Ins(TipoRegistro Reg, TipoApontador Ap, short *Cresceu, TipoRegistro *RegRe
 
     if (Ap->Pt == Interna) //verifica se a pagina eh interna
     { 
+
         int i = 1;
 
         while (i < Ap->UU.U0.ni && Reg.Chave > Ap->UU.U0.ri[i - 1]) i++;
         
         if (Reg.Chave == Ap->UU.U0.ri[i -1])//Se achar uma chave igual, chama recursivamente para o lado direito
+
+        while (i < Ap->UU.U0.ni && Reg.Chave > Ap->UU.U0.ri[i - 1]) i++;
+        
+        if (Reg.Chave == Ap->UU.U0.ri[i-1])//Se achar uma chave igual, chama recursivamente para o lado direito
+
         {
             Ins(Reg, Ap->UU.U0.pi[i], Cresceu, RegRetorno, ApRetorno, ApPagAuxiliar);
         }
@@ -134,7 +140,7 @@ void Ins(TipoRegistro Reg, TipoApontador Ap, short *Cresceu, TipoRegistro *RegRe
         ApTemp->UU.U0.ni = 0;
         ApTemp->UU.U0.pi[0] = nullptr;
         
-        
+
         if (i < M + 1) 
         {
             InsereNaPaginaInt(ApTemp, Ap->UU.U0.ri[2 * M - 1], Ap->UU.U0.pi[2 * M]);//pega o ultimo elemento e taca na temp
@@ -151,10 +157,15 @@ void Ins(TipoRegistro Reg, TipoApontador Ap, short *Cresceu, TipoRegistro *RegRe
                 
         Ap->UU.U0.ni = M; 
         ApTemp->UU.U0.pi[0] = Ap->UU.U0.pi[M + 1]; 
+
         RegRetorno->Chave = Ap->UU.U0.ri[M]; 
+
+        *RegRetorno = Ap->UU.U0.ri[M]; 
+
         *ApRetorno = ApTemp; //Elementos do meio
 
     }
+
 
 
     // se a pagina eh externa: 
@@ -162,6 +173,11 @@ void Ins(TipoRegistro Reg, TipoApontador Ap, short *Cresceu, TipoRegistro *RegRe
     while (i < Ap->UU.U1.ne && Reg.Chave > Ap->UU.U1.re[i - 1].Chave) i++;
     
     if (i < (2 * M))//Insere na pagina se ela nao estiver cheia
+
+    // se a pagina eh externa: 
+
+    if (Ap->UU.U1.ne < 2 * M)//Insere na pagina se ela nao estiver cheia
+
     {
         cout << "Entrou no insere pag externa\n";
         InsereNaPaginaExt(Ap, Reg);  
@@ -172,9 +188,15 @@ void Ins(TipoRegistro Reg, TipoApontador Ap, short *Cresceu, TipoRegistro *RegRe
     //Aqui começa a parte da divisao.
     ApTemp = (TipoApontador)malloc(sizeof(TipoPagina));
     ApTemp->UU.U1.ne = 0; 
+
     cout << "Iniciou processo de divisao pagina externa" << endl;
     
     
+
+
+    while (i < Ap->UU.U1.ne && Reg.Chave > Ap->UU.U1.re[i - 1].Chave) i++;
+
+
      //Esse if verifica se vai ser inserir na pagina que ja existe ou vai para a nova pagina
      cout << i << endl;
     if (i < M + 1)
@@ -208,7 +230,7 @@ void Ins(TipoRegistro Reg, TipoApontador Ap, short *Cresceu, TipoRegistro *RegRe
 
 // Função principal de inserção
 void Insere(TipoRegistro Reg, TipoApontador* Ap, TipoApontador* ApPagAuxiliar) {
-    
+
     short Cresceu;
     TipoRegistro RegRetorno;
     TipoPagina *ApRetorno, *ApTemp;
@@ -221,6 +243,7 @@ void Insere(TipoRegistro Reg, TipoApontador* Ap, TipoApontador* ApPagAuxiliar) {
         ApTemp->UU.U0.ri[0] = RegRetorno.Chave;
         ApTemp->UU.U0.pi[1] = ApRetorno;
         ApTemp->UU.U0.pi[0] = *Ap;
+
         ApTemp->Pt = Interna;
         *Ap = ApTemp;
         cout << "Primeira pagina interna\n";
@@ -228,6 +251,13 @@ void Insere(TipoRegistro Reg, TipoApontador* Ap, TipoApontador* ApPagAuxiliar) {
     // No final aptemp é atualizado com o novo endereço da raiz que foi criado 
       
     if ( Cresceu && (*ApPagAuxiliar)->Pt == Externa ) { //(aqui inicia a primeira pagina folha)
+
+        *Ap = ApTemp;
+    }
+    // No final aptemp é atualizado com o novo endereço da raiz que foi criado 
+
+    if (Cresceu && (*ApPagAuxiliar)->Pt == Externa ) { //(aqui inicia a primeira pagina folha)
+
         ApTemp = (TipoPagina*) malloc(sizeof(TipoPagina));
         ApTemp->UU.U1.ne = 1;
         ApTemp->UU.U1.re[0] = RegRetorno;
@@ -242,10 +272,17 @@ bool Pesquisa(TipoRegistro *x, TipoApontador *Ap)
 {
     int i = 1;
     if ((*Ap)->Pt == Interna) { // Aqui pesquisa na pag interna
+
         cout << "Pesquisa entrou na pagina interna\n";
         while (i < (*Ap)->UU.U0.ni && x->Chave > (*Ap)->UU.U0.ri[i - 1]) i++; //pesquisa na pag
         if (x->Chave < (*Ap)->UU.U0.ri[i - 1]) //maior ou menor que o ultimo registro verificado
             Pesquisa(x, &(*Ap)->UU.U0.pi[i - 1]);
+
+        i = 1;
+        while (i < Pag->UU.U0.ni && x->Chave > Pag->UU.U0.ri[i - 1]) i++; //pesquisa na pag
+        if (x->Chave < Pag->UU.U0.ri[i - 1]) //maior ou menor que o ultimo registro verificado
+            Pesquisa(x, &Pag->UU.U0.pi[i - 1]);
+
         else
             Pesquisa(x, &(*Ap)->UU.U0.pi[i]); //se achar o valor, vai para o filho do lado direito
         return true;
@@ -266,7 +303,8 @@ bool Pesquisa(TipoRegistro *x, TipoApontador *Ap)
         return true;
     }
 
-    else
+    else{
+        // printf("TipoRegistro nao esta na arvore\n");
         return false;
     
 }
@@ -299,5 +337,11 @@ int main() {
     free(Auxiliar);
     free(Reg);
 
+
     return 0;
 }
+
+    Reg.Chave = 100;
+    Pesquisa(&Reg, Arvore);
+}
+
