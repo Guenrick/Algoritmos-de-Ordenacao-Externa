@@ -3,7 +3,6 @@
 #include <iostream>
 #include <chrono>
 
-
 using namespace std;
 
 bool pesquisaArvoreBinaria(int, FILE*);
