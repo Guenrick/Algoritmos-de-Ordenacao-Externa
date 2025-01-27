@@ -3,6 +3,7 @@ using namespace std;
 
 #define M 2  // Grau mínimo da árvore B*
 
+
 // Definição das estruturas
 typedef long TipoChave; 
 
@@ -30,7 +31,6 @@ typedef struct TipoPagina {
 } TipoPagina;
 
 // Função para inserir em uma página que não está cheia. Insere no lugar correto, e aponta tambem
-
 void InsereNaPaginaInt(TipoApontador Ap, TipoRegistro Reg, TipoApontador ApDir) { //ApDir e o apontador do filho a direitra
     short NaoAchouPosicao; //se nao for recebe 0
     int k;
@@ -40,22 +40,10 @@ void InsereNaPaginaInt(TipoApontador Ap, TipoRegistro Reg, TipoApontador ApDir) 
     while (NaoAchouPosicao)
     {   
         if (Reg.Chave >= Ap->UU.U0.ri[k - 1].Chave) //Verifica se oq eu quero add é maior do q o maior atual
-
-void InsereNaPagina(TipoApontador Ap, TipoRegistro Reg, TipoApontador ApDir) { //ApDir e o apontador do filho a direitra
-    bool NaoAchouPosicao; //se nao for recebe 0
-    
-    int k = Ap->UU.U1.ne;
-
-    NaoAchouPosicao = (k > 0);
-
-    while (NaoAchouPosicao) {   
-        if (Reg.Chave >= Ap->UU.U1.re[k-1].Chave) //Verifica se oq eu quero add é maior do q o maior atual
-
         {
             NaoAchouPosicao = false; 
             break;           
         }
-
         Ap->UU.U0.ri[k] = Ap->UU.U0.ri[k - 1];
         Ap->UU.U0.pi[k + 1] = Ap->UU.U0.pi[k];
         k--; //Se esta aqui entao a chave nao é maior
@@ -86,16 +74,6 @@ void InsereNaPaginaExt(TipoApontador Ap, TipoRegistro Reg) { //ApDir e o apontad
     }
     Ap->UU.U1.re[k] = Reg; //k é a posicao correta
     Ap->UU.U1.ne++;
-
-        Ap->UU.U1.re[k] = Ap->UU.U1.re[k-1]; 
-        k--; //Se esta aqui entao a chave nao é maior
-        if (k < 1) NaoAchouPosicao = false;//entao, achou posicao
-    }
-
-    Ap->UU.U1.re[k] = Reg;
-    Ap->UU.U1.ne++;
-
-
 }
 
 /* Função auxiliar para inserção. Aqui ela basicamente percorre
@@ -152,15 +130,9 @@ void Ins(TipoRegistro Reg, TipoApontador Ap, short *Cresceu, TipoRegistro *RegRe
         {
         /* Esse if meio que já faz a comparação de maior e menor
         se baseando apenas no i (pelo que entendi)*/
-
             InsereNaPaginaInt(ApTemp, Ap->UU.U0.ri[2 * M - 1], Ap->UU.U0.pi[2 * M]);//pega o ultimo elemento e taca na temp
             Ap->UU.U0.ni;
             InsereNaPaginaInt(Ap, *RegRetorno, *ApRetorno);//Regretorno é um valor que tava mais baixo e ta subindo
-
-            InsereNaPagina(ApTemp, Ap->UU.U0.ri[2 * M - 1], Ap->p[2 * M]);//pega o ultimo elemento e taca na temp
-            Ap->UU.U0.ni;
-            InsereNaPagina(Ap, *RegRetorno, *ApRetorno);//Regretorno é um valor que tava mais baixo e ta subindo
-
         }
         else 
         {
@@ -187,60 +159,7 @@ void Ins(TipoRegistro Reg, TipoApontador Ap, short *Cresceu, TipoRegistro *RegRe
         return;
     }
 
-
     if (Ap->UU.U1.ne < 2 * M)//Insere na pagina se ela nao estiver cheia
-
-}
-
-// Função principal de inserção
-void Insere(TipoRegistro Reg, TipoApontador* Ap) {
-
-    short Cresceu;
-    TipoRegistro RegRetorno;
-    TipoPagina *ApRetorno, *ApTemp;
-
-    Ins(Reg, *Ap, &Cresceu, &RegRetorno, &ApRetorno);
-
-    if (Cresceu) {
-        ApTemp = (TipoPagina*) malloc(sizeof(TipoPagina));
-        ApTemp->UU.U0.ni = 1;
-        ApTemp->UU.U0.ri[0] = RegRetorno.Chave;
-        ApTemp->UU.U0.pi[1] = ApRetorno;
-        ApTemp->UU.U0.pi[1] = *Ap; 
-        *Ap = ApTemp;
-    }
-    //No final aptemp é atualizado com o novo endereço da raiz que foi criad
-
-    
-    // Se nao for interna e estiver vazia, entao crio a pagina raiz.
-    if (Ap == nullptr) 
-    { // Se sim, cria a pagina raiz. 
-        Cresceu = true;
-        RegRetorno = Reg;
-        ApRetorno = nullptr;
-        return;
-    }
-
-    // While como na pesquisa. Procura o item na pagina.
-    while (i < Ap->n && Reg.Chave > Ap->r[i-1].Chave) i++; 
-    if (Reg.Chave == Ap->r[i-1].Chave) 
-    {
-        //Esse if verifica se a chave já existe
-        Cresceu = false; // Chave já existe 
-        return;
-    }
-
-
-    /* Esse if determina para qual lado dos ponteiros a
-    chamada recursiva vai. Se o reg.chave for menor, 
-    decrementa e vai para um ponteiro menor e vice-versa    */
-    if(Reg.Chave < Ap->r[i - 1].Chave) i--;
-    // Chamada recursiva
-    Ins(Reg, Ap->p[i], Cresceu, RegRetorno, ApRetorno);
-    
-    //Essa parte só é acessada quando começa a desempilhar.
-    if (!*Cresceu) 
-
     {
         InsereNaPaginaExt(Ap, *RegRetorno);  
         *Cresceu = false;
@@ -278,9 +197,33 @@ void Insere(TipoRegistro Reg, TipoApontador* Ap) {
 
 }
 
+// Função principal de inserção
+void Insere(TipoRegistro Reg, TipoApontador* Ap) {
+    short Cresceu;
+    TipoRegistro RegRetorno;
+    TipoPagina *ApRetorno, *ApTemp;
+    //o ins tem 3 retornos
+    Ins(Reg, *Ap, &Cresceu, &RegRetorno, &ApRetorno);
+    if (Cresceu) { //se cresceu eh true, chegou na raiz. (aqui cria nova pagina raiz)
+        ApTemp = (TipoPagina*) malloc(sizeof(TipoPagina));
+        ApTemp->UU.U0.ni = 1;
+        ApTemp->UU.U0.ri[0] = RegRetorno;
+        ApTemp->UU.U0.pi[1] = ApRetorno;
+        ApTemp->UU.U0.pi[0] = *Ap; *Ap = ApTemp;
+    }
+    // No final aptemp é atualizado com o novo endereço da raiz que foi criado 
+
+    if (Cresceu) { //(aqui inicia a primeira pagina folha)
+        ApTemp = (TipoPagina*) malloc(sizeof(TipoPagina));
+        ApTemp->UU.U1.ne = 1;
+        ApTemp->UU.U1.re[0] = RegRetorno;
+        *Ap = ApTemp;
+    }
+}
 
 // Função de pesquisa
-bool Pesquisa(TipoRegistro *x, TipoApontador *Ap) {
+bool Pesquisa(TipoRegistro *x, TipoApontador *Ap) 
+{
     int i;
     TipoApontador Pag; //recebendo endereço da raiz
     Pag = *Ap;
@@ -305,8 +248,8 @@ bool Pesquisa(TipoRegistro *x, TipoApontador *Ap) {
         return true;
     }
 
-    else {
-        // printf("TipoRegistro nao esta na arvore\n");
+    else{
+        printf("TipoRegistro nao esta na arvore\n");
         return false;
     }
 }
