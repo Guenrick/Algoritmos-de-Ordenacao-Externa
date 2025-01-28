@@ -2,7 +2,7 @@
 #ifndef PESQUISA_SEQUENCIAL
 #define PESQUISA_SEQUENCIAL
 
-#define QTDPAGINAS 5 // qtd de registros / 20
+#define QTDPAGINAS 5 // qtd de registro / nº de paginas
 #define REGISTROSPAGINA 20
 
 typedef struct TipoRegistro {
@@ -11,6 +11,6 @@ typedef struct TipoRegistro {
     char dado2[5000];
 } TipoRegistro;
 
-bool pesquisa(int indexPagina[], int tam, TipoRegistro *registroBuscado, FILE *arq, int *cont, int *n_buscas_pre, int *nTransferencias_pes);
+bool pesquisa(int indexPagina[], int tam, TipoRegistro *registroBuscado, FILE *arq, int *cont, int *nTransferencias_pes);
 
 #endif
