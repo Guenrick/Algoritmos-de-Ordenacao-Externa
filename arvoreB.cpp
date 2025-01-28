@@ -2,6 +2,9 @@
 using namespace std;
 #define M 2// Ordem mínima (t)
 
+int nTransferencias_pre = 0, nComparacoes_pre = 0; //temp
+int nTransferencias_pes = 0, nComparacoes_pes = 0; //t
+
 // Definição das estruturas
 typedef long TipoChave;
 
@@ -20,6 +23,7 @@ typedef struct TipoPagina {
 
 // Função para inserir em uma página que não está cheia. Insere no lugar correto, e aponta tambem
 void InsereNaPagina(TipoApontador Ap, TipoRegistro Reg, TipoApontador ApDir) {
+    nTransferencias_pre++;
     short NaoAchouPosicao; //se nao for recebe 0
     int k;
     k = Ap->n;
@@ -29,6 +33,7 @@ void InsereNaPagina(TipoApontador Ap, TipoRegistro Reg, TipoApontador ApDir) {
     {   
         if (Reg.Chave >= Ap->r[k-1].Chave) //Verifica se oq eu quero add é maior do q o maior atual
         {
+            nComparacoes_pre++;
             NaoAchouPosicao = false; 
             break;           
         }
@@ -154,15 +159,18 @@ bool Pesquisa(TipoRegistro* x, TipoApontador Ap) {
 
     // Pesquisa sequencial para encontrar o intervalo desejado
     while (i < Ap->n && x->Chave > Ap->r[i - 1].Chave) {
+        nComparacoes_pes++;
         i++;
     }
 
     if (x->Chave == Ap->r[i - 1].Chave) {
+        nComparacoes_pes++;
         *x = Ap->r[i - 1]; // Registro encontrado
         return true;
     }
 
     if (x->Chave < Ap->r[i - 1].Chave) {
+        nComparacoes_pes++;
         return Pesquisa(x, Ap->p[i - 1]); // Pesquisa no filho à esquerda
     } 
     else
@@ -238,13 +246,28 @@ int main() {
     reg.Chave = 50;
     Insere(reg, &raiz);
 
+    
+    reg.Chave = 36;
+    if(Pesquisa(&reg, raiz))
+    
     // Imprimindo a árvore
     cout << "Estrutura da arvore B após inserções adicionais:" << endl;
     imprimirArvore(raiz);
 
+     /* Tempo de execução */
+    cout << "\nPRÉ-PROCESSAMENTO -------" << endl;
+    cout << "Número de transferências: " << nTransferencias_pre << endl;
+    cout << "Comparacoes realizadas: " << nComparacoes_pre << endl;
+    //cout << "Tempo de pre-processamento: " << tempoProcessamento.count() << "ms" << endl;
+    /*TEMPO DE PRE-PROCESSAMENTO*/
+    cout << "\n";
+    cout << "PESQUISA ----------------" << endl;
+    cout << "Número de transferências: " << nTransferencias_pes << endl;
+    cout << "Comparacoes realizadas: " << nComparacoes_pes << endl;
+    //cout << "Tempo de pesquisa: " << tempoPesquisa.count() << "ms" << endl;
+    /*TEMPO DE PRE-PROCESSAMENTO*/
+    
     // Liberando a memória da árvore
     freeArvore(raiz);
-    cout << "Arvore liberada da memoria." << endl;
-
     return 0;
-}
+}   
