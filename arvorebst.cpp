@@ -195,8 +195,6 @@ void Ins(TipoRegistro *Reg, TipoApontador *Ap, short *Cresceu, TipoRegistro *Reg
 
     *Cresceu = true;
     (*ApPagAuxiliar)->Pt = Interna;
-
-    free(ApTemp);
    
 }
 
@@ -212,7 +210,6 @@ void Insere(TipoRegistro *Reg, TipoApontador* Ap, TipoApontador* ApPagAuxiliar) 
     Ins(Reg, Ap, &Cresceu, RegRetorno, &ApRetorno, ApPagAuxiliar);
 
     if ( Cresceu && (*ApPagAuxiliar)->Pt == Interna ) { //se cresceu eh true, chegou na raiz. (aqui cria nova pagina raiz)
-
         ApTemp = (TipoPagina*) malloc(sizeof(TipoPagina));
         ApTemp->UU.U0.ni = 1;
         ApTemp->UU.U0.ri[0] = RegRetorno->Chave;
@@ -220,7 +217,7 @@ void Insere(TipoRegistro *Reg, TipoApontador* Ap, TipoApontador* ApPagAuxiliar) 
         ApTemp->UU.U0.pi[0] = *Ap;
         ApTemp->Pt = Interna;
         *Ap = ApTemp;
-
+        std::cout << "Criou pagina interna\n";
     }
 
     // No final aptemp é atualizado com o novo endereço da raiz que foi criado 
@@ -232,9 +229,9 @@ void Insere(TipoRegistro *Reg, TipoApontador* Ap, TipoApontador* ApPagAuxiliar) 
         ApTemp->UU.U1.re[0] = *RegRetorno;
         ApTemp->Pt = Externa;
         *Ap = ApTemp;
+        std::cout << "Primeira pagina externa\n";
 
     }
-
     free(RegRetorno);
 }
 
@@ -252,8 +249,10 @@ bool Pesquisa(TipoRegistro *x, TipoApontador *Ap)
         else if (x->Chave >= (*Ap)->UU.U0.ri[i - 1])
             return Pesquisa(x, &(*Ap)->UU.U0.pi[i]); //se achar o valor, vai para o filho do lado direito
         //faz esse processo até encontrar uma pagina externa e ir para o while de baixo.
+
     } 
 
+    cout << "Pesquisa entrou na pagina externa\n";
     // Pesquisa na pagina externa
     while (i < (*Ap)->UU.U1.ne && x->Chave > (*Ap)->UU.U1.re[i - 1].Chave) i++; //quando chego nessa parte ja estou na pagina certa do item (se ele existir)
     
@@ -282,7 +281,7 @@ int main() {
         Insere(Reg, &ApArvore, &ApAuxiliar);
     }
   
-    Reg->Chave = 2001;
+    Reg->Chave = 2000;
     // fflush(stdin);
     if (Pesquisa(Reg, &ApArvore)) {
         cout << "Chave encontrada: " << Reg->Chave << "\n";
@@ -292,6 +291,7 @@ int main() {
 
     free(ApAuxiliar);
     free(Reg);
+
 
     return 0;
 }
