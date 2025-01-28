@@ -1,28 +1,33 @@
 #include <iostream>
 #include "pesquisaSequencial.h"
 
+using namespace std;
+
 bool buscaBinaria(TipoRegistro pagina[], int qtdItens, int chave, int pEsq, int pDir, int pMeio, TipoRegistro *registro, int *cont) {
 
+    (*cont)++;
     if(pEsq > pDir)
         return false;
 
+    (*cont)++;
     if(chave > pagina[pMeio].chave)
         pEsq = pMeio + 1;
-    else if (chave < pagina[pMeio].chave)
-        pDir = pMeio - 1;
-    else if (chave == pagina[pMeio].chave) {
+    else 
+        (*cont)++;
+        if (chave < pagina[pMeio].chave)
+            pDir = pMeio - 1;
+        else if (chave == pagina[pMeio].chave) {
         *registro = pagina[pMeio];
         return true;
-    }
+        }
 
     pMeio = (pDir + pEsq) / 2;
-    (*cont)++;
 
     return buscaBinaria(pagina, qtdItens, chave, pEsq, pDir, pMeio, registro, cont);
 
 }
 
-bool pesquisa(int menorChaveDaPagina[], int tam, TipoRegistro *registroBuscado, FILE *arq, int *cont) {
+bool pesquisa(int menorChaveDaPagina[], int tam, TipoRegistro *registroBuscado, FILE *arq, int *cont, int *nTransferencias_pes) {
 
     int qtdItens, desloc, numeroDaPagina = 0;
     TipoRegistro pagina[REGISTROSPAGINA];
@@ -46,6 +51,7 @@ bool pesquisa(int menorChaveDaPagina[], int tam, TipoRegistro *registroBuscado, 
     // realiza a leitura da pagina
     desloc = (numeroDaPagina-1) * REGISTROSPAGINA * sizeof(TipoRegistro); /* calcula o tamanho do deslocamento a ser feito no arquivo */
     fseek(arq, desloc, SEEK_SET);
+    (*nTransferencias_pes)++;
     fread(&pagina, sizeof(TipoRegistro), qtdItens, arq);
 
     int pEsq = 0, pDir = qtdItens - 1, pMeio = pDir / 2; 
