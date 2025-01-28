@@ -2,10 +2,10 @@
 using namespace std;
 
 #define M 2  // Grau mínimo da árvore B*
-
+int nTransferencias_pre = 0, nComparacoes_pre = 0; //temp
+int nTransferencias_pes = 0, nComparacoes_pes = 0; //t
 // Definição das estruturas
 typedef long TipoChave; 
-
 typedef struct TipoRegistro {
     TipoChave Chave;
 } TipoRegistro;
@@ -31,6 +31,7 @@ typedef struct TipoPagina {
 
 // Função para inserir em uma página que não está cheia. Insere no lugar correto, e aponta tambem
 void InsereNaPaginaInt(TipoApontador *Ap, TipoChave Chave, TipoApontador ApDir) { //ApDir e o apontador do filho a direitra
+    nTransferencias_pre++;
     bool NaoAchouPosicao; //se nao for recebe 0
     int k;
     k = (*Ap)->UU.U0.ni;
@@ -39,13 +40,17 @@ void InsereNaPaginaInt(TipoApontador *Ap, TipoChave Chave, TipoApontador ApDir) 
     while (NaoAchouPosicao) {   
         if (Chave >= (*Ap)->UU.U0.ri[k - 1]) //Verifica se oq eu quero add é maior do q o maior atual
         {
+            nComparacoes_pre++;
             NaoAchouPosicao = false; 
             break;           
         }
         (*Ap)->UU.U0.ri[k] = (*Ap)->UU.U0.ri[k - 1];
         (*Ap)->UU.U0.pi[k + 1] = (*Ap)->UU.U0.pi[k];
         k--; //Se esta aqui entao a chave nao é maior
-        if (k < 1) NaoAchouPosicao = false;//entao, achou posicao
+        if (k < 1) {
+            nComparacoes_pre++;
+            NaoAchouPosicao = false;//entao, achou posicao
+        }
     }
     (*Ap)->UU.U0.ri[k] = Chave; //k é a posicao correta
     (*Ap)->UU.U0.pi[k + 1] = ApDir;// algumas vezes ApDir vai ser nulo
@@ -54,6 +59,7 @@ void InsereNaPaginaInt(TipoApontador *Ap, TipoChave Chave, TipoApontador ApDir) 
 
 
 void InsereNaPaginaExt(TipoApontador *Ap, TipoRegistro *Reg) { //ApDir e o apontador do filho a direitra
+    nTransferencias_pre++;
     bool NaoAchouPosicao; //se nao for recebe 0
     int k;
     k = (*Ap)->UU.U1.ne;
@@ -63,14 +69,18 @@ void InsereNaPaginaExt(TipoApontador *Ap, TipoRegistro *Reg) { //ApDir e o apont
     {   
         if (Reg->Chave >= (*Ap)->UU.U1.re[k-1].Chave) //Verifica se oq eu quero add é maior do q o maior atual
         {
+            nComparacoes_pre++;
             NaoAchouPosicao = false; 
             break;           
         }
         (*Ap)->UU.U1.re[k] = (*Ap)->UU.U1.re[k - 1];
         k--; //Se esta aqui entao a chave nao é maior
-        if (k < 1) NaoAchouPosicao = false;//entao, achou posicao
+        if (k < 1){
+            nComparacoes_pre++;
+            NaoAchouPosicao = false;//entao, achou posicao
+        }
     }
-    std::cout << "Inseriu " << Reg->Chave << "\n";
+    
     (*Ap)->UU.U1.re[k] = *Reg; //k é a posicao correta
     (*Ap)->UU.U1.ne++;
 }
@@ -78,7 +88,8 @@ void InsereNaPaginaExt(TipoApontador *Ap, TipoRegistro *Reg) { //ApDir e o apont
 /* Função auxiliar para inserção. Aqui ela basicamente percorre
 a arvore inteira procurando um lugar para inserir o 
 RegChave */
-void Ins(TipoRegistro *Reg, TipoApontador *Ap, short *Cresceu, TipoRegistro *RegRetorno, TipoApontador *ApRetorno, TipoApontador *ApPagAuxiliar) {
+void Ins(TipoRegistro *Reg, TipoApontador *Ap, short *Cresceu, TipoRegistro *RegRetorno,
+     TipoApontador *ApRetorno, TipoApontador *ApPagAuxiliar) {
     
     long i = 1; 
     long j;
@@ -154,7 +165,7 @@ void Ins(TipoRegistro *Reg, TipoApontador *Ap, short *Cresceu, TipoRegistro *Reg
     }
     
     if ((*Ap)->UU.U1.ne < 2 * M) {//Insere na pagina se ela nao estiver cheia
-        std::cout << "Entrou no insere pag externa\n";
+        
         InsereNaPaginaExt(Ap, Reg);  
         *Cresceu = false;
         return;
@@ -165,7 +176,7 @@ void Ins(TipoRegistro *Reg, TipoApontador *Ap, short *Cresceu, TipoRegistro *Reg
     ApTemp->UU.U1.ne = 0; 
     ApTemp->Pt = Externa;
 
-    std::cout << "Iniciou processo de divisao pagina externa" << endl;
+    
 
     while (i < (*Ap)->UU.U1.ne && Reg->Chave > (*Ap)->UU.U1.re[i - 1].Chave) i++;
 
@@ -182,7 +193,7 @@ void Ins(TipoRegistro *Reg, TipoApontador *Ap, short *Cresceu, TipoRegistro *Reg
         InsereNaPaginaExt(&ApTemp, Reg); // Reg vem se for um dos 2 maiores
     }
 
-    std::cout << "Move a segunda metade\n";
+    
     for(j = M + 2; j <= 2 * M; j++)
         InsereNaPaginaExt(&ApTemp, &((*Ap)->UU.U1.re[j-1]));
 
@@ -217,7 +228,6 @@ void Insere(TipoRegistro *Reg, TipoApontador* Ap, TipoApontador* ApPagAuxiliar) 
         ApTemp->UU.U0.pi[0] = *Ap;
         ApTemp->Pt = Interna;
         *Ap = ApTemp;
-        std::cout << "Criou pagina interna\n";
     }
 
     // No final aptemp é atualizado com o novo endereço da raiz que foi criado 
@@ -229,7 +239,6 @@ void Insere(TipoRegistro *Reg, TipoApontador* Ap, TipoApontador* ApPagAuxiliar) 
         ApTemp->UU.U1.re[0] = *RegRetorno;
         ApTemp->Pt = Externa;
         *Ap = ApTemp;
-        std::cout << "Primeira pagina externa\n";
 
     }
     free(RegRetorno);
@@ -240,25 +249,38 @@ bool Pesquisa(TipoRegistro *x, TipoApontador *Ap)
 {
     int i = 1;
     if ((*Ap)->Pt == Interna) { // Aqui pesquisa na pag interna
-
-        cout << "Pesquisa entrou na pagina interna\n";
-        while (i < (*Ap)->UU.U0.ni && x->Chave > (*Ap)->UU.U0.ri[i - 1]) i++; //pesquisa na pag
-
+        nComparacoes_pes++;
+        
+        while (i < (*Ap)->UU.U0.ni && x->Chave > (*Ap)->UU.U0.ri[i - 1]) 
+        {
+            nComparacoes_pes++;
+            i++; //pesquisa na pag
+        }
         if (x->Chave < (*Ap)->UU.U0.ri[i - 1]) //maior ou menor que o ultimo registro verificado
+        {
+            nComparacoes_pes++;
             return Pesquisa(x, &(*Ap)->UU.U0.pi[i - 1]);
-        else if (x->Chave >= (*Ap)->UU.U0.ri[i - 1])
+        }
+        else if (x->Chave >= (*Ap)->UU.U0.ri[i - 1]){
+            nComparacoes_pes++;
             return Pesquisa(x, &(*Ap)->UU.U0.pi[i]); //se achar o valor, vai para o filho do lado direito
         //faz esse processo até encontrar uma pagina externa e ir para o while de baixo.
+        }
 
     } 
 
-    cout << "Pesquisa entrou na pagina externa\n";
-    // Pesquisa na pagina externa
-    while (i < (*Ap)->UU.U1.ne && x->Chave > (*Ap)->UU.U1.re[i - 1].Chave) i++; //quando chego nessa parte ja estou na pagina certa do item (se ele existir)
     
-    cout << (*Ap)->UU.U1.re[2].Chave << endl;
+    // Pesquisa na pagina externa
+    while (i < (*Ap)->UU.U1.ne && x->Chave > (*Ap)->UU.U1.re[i - 1].Chave) 
+    {
+        nComparacoes_pes++;
+        i++; //quando chego nessa parte ja estou na pagina certa do item (se ele existir)
+    }
+   
 
-    if (x->Chave == (*Ap)->UU.U1.re[i - 1].Chave) {
+    if (x->Chave == (*Ap)->UU.U1.re[i - 1].Chave) 
+    {
+        nComparacoes_pes++;
         *x = (*Ap)->UU.U1.re[i - 1]; //retorna o registro completo
         return true;
     }
@@ -274,21 +296,47 @@ int main() {
     TipoRegistro *Reg;
     Reg = (TipoRegistro*)malloc(sizeof(TipoRegistro));
 
+
     // Exemplo de inserções
     for (int i = 1; i <= 2000; i++) {
         Reg->Chave = i;
-        cout << "Adicionando registro: " << Reg->Chave << endl;
         Insere(Reg, &ApArvore, &ApAuxiliar);
     }
-  
-    Reg->Chave = 2000;
-    // fflush(stdin);
-    if (Pesquisa(Reg, &ApArvore)) {
-        cout << "Chave encontrada: " << Reg->Chave << "\n";
-    } else {
-        cout << "Chave não encontrada.\n";
-    }
+    
+    FILE *arquivo;
 
+    // Abre o arquivo para leitura
+    arquivo = fopen("chaves.txt", "r");
+    if (arquivo == nullptr) {
+        cout << "Erro ao abrir o arquivo!" << endl;
+        return 1;
+    }
+    // Lê as chaves do arquivo e insere na árvore B
+    while (fscanf(arquivo, "%ld", &Reg) != EOF) {
+        Insere(Reg, &ApArvore, &ApAuxiliar);
+    }
+    fclose(arquivo); // Fecha o arquivo
+
+    // Realizando as 20 pesquisas 
+    // Reg->Chave = 2000;
+    // if ()
+    // {
+    //     /* code */
+    // }
+  
+    /* Tempo de execução */
+    cout << "\nPRÉ-PROCESSAMENTO -------" << endl;
+    cout << "Número de transferências: " << nTransferencias_pre << endl;
+    cout << "Comparacoes realizadas: " << nComparacoes_pre << endl;
+    //cout << "Tempo de pre-processamento: " << tempoProcessamento.count() << "ms" << endl;
+    /*TEMPO DE PRE-PROCESSAMENTO*/
+    cout << "\n";
+    cout << "PESQUISA ----------------" << endl;
+    cout << "Número de transferências: " << nTransferencias_pes << endl;
+    cout << "Comparacoes realizadas: " << nComparacoes_pes << endl;
+    //cout << "Tempo de pesquisa: " << tempoPesquisa.count() << "ms" << endl;
+    /*TEMPO DE PRE-PROCESSAMENTO*/
+    
     free(ApAuxiliar);
     free(Reg);
 
