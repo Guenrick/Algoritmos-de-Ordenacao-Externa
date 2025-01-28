@@ -33,7 +33,6 @@ bool pesquisaArvoreBinaria(int chave, FILE *arqEntrada, int *nTransferencias_pes
         }
         (*nTransferencias_pes)++;
     }
-    (*nTransferencias_pes)--;
 
     free(no);
     return false;

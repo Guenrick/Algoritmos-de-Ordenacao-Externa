@@ -57,7 +57,6 @@ int main(int argc, char *argv[]) {
 
         nTransferencias_pre++;
     }
-    nTransferencias_pre--;
 
     fclose(arq_entrada);
     fclose(arq_saida);
