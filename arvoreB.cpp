@@ -1,5 +1,9 @@
 #include <iostream>
+#include <chrono>
+
 using namespace std;
+using namespace chrono;
+
 #define M 2// Ordem mínima (t)
 
 int nTransferencias_pre = 0, nComparacoes_pre = 0; //temp
@@ -22,8 +26,10 @@ typedef struct TipoPagina {
 
 
 // Função para inserir em uma página que não está cheia. Insere no lugar correto, e aponta tambem
-void InsereNaPagina(TipoApontador Ap, TipoRegistro Reg, TipoApontador ApDir) {
+
+void InsereNaPagina(TipoApontador Ap, TipoRegistro Reg, TipoApontador ApDir, int* cont_pre) {
     nTransferencias_pre++;
+
     short NaoAchouPosicao; //se nao for recebe 0
     int k;
     k = Ap->n;
@@ -31,6 +37,7 @@ void InsereNaPagina(TipoApontador Ap, TipoRegistro Reg, TipoApontador ApDir) {
 
     while (NaoAchouPosicao)
     {   
+        (*cont_pre)++;
         if (Reg.Chave >= Ap->r[k-1].Chave) //Verifica se oq eu quero add é maior do q o maior atual
         {
             nComparacoes_pre++;
@@ -51,7 +58,7 @@ void InsereNaPagina(TipoApontador Ap, TipoRegistro Reg, TipoApontador ApDir) {
 a arvore inteira procurando um lugar para inserir o 
 RegChave */
 void Ins(TipoRegistro Reg, TipoApontador Ap, short *Cresceu, 
-         TipoRegistro *RegRetorno, TipoApontador *ApRetorno) 
+         TipoRegistro *RegRetorno, TipoApontador *ApRetorno, int* nTransferencias_pre, int* cont_pre) 
 {
     
     long i = 1; long j;
@@ -68,7 +75,13 @@ void Ins(TipoRegistro Reg, TipoApontador Ap, short *Cresceu,
     }
 
     // While como na pesquisa. Procura o item na pagina.
-    while (i < Ap->n && Reg.Chave > Ap->r[i-1].Chave) i++; 
+
+    (*cont_pre)++;
+    while (i < Ap->n && Reg.Chave > Ap->r[i-1].Chave){
+        i++;
+        (*cont_pre)++;
+    }  
+
     if (Reg.Chave == Ap->r[i-1].Chave) 
     {
         //Esse if verifica se a chave já existe
@@ -79,9 +92,10 @@ void Ins(TipoRegistro Reg, TipoApontador Ap, short *Cresceu,
     /* Esse if determina para qual lado dos ponteiros a
     chamada recursiva vai. Se o reg.chave for menor, 
     decrementa e vai para um ponteiro menor e vice-versa    */
+    (*cont_pre)++;
     if(Reg.Chave < Ap->r[i - 1].Chave) i--;
     // Chamada recursiva
-    Ins(Reg, Ap->p[i], Cresceu, RegRetorno, ApRetorno);
+    Ins(Reg, Ap->p[i], Cresceu, RegRetorno, ApRetorno, nTransferencias_pre, cont_pre);
     
     //Essa parte só é acessada quando começa a desempilhar.
     if (!*Cresceu) 
@@ -94,7 +108,7 @@ void Ins(TipoRegistro Reg, TipoApontador Ap, short *Cresceu,
     if (Ap->n < 2 * M) //verifica se a pagina ta completa
     //se sim, tem que fazer a divisão
     {
-        InsereNaPagina(Ap, *RegRetorno, *ApRetorno);
+        InsereNaPagina(Ap, *RegRetorno, *ApRetorno, cont_pre);
         *Cresceu = false;
         return;
     } 
@@ -113,19 +127,19 @@ void Ins(TipoRegistro Reg, TipoApontador Ap, short *Cresceu,
     {
     /* Esse if meio que já faz a comparação de maior e menor
     se baseando apenas no i (pelo que entendi)*/
-        InsereNaPagina(ApTemp, Ap->r[2 * M - 1], Ap->p[2 * M]);//pega o ultimo elemento e taca na temp
+        InsereNaPagina(ApTemp, Ap->r[2 * M - 1], Ap->p[2 * M], cont_pre);//pega o ultimo elemento e taca na temp
         Ap->n--;
-        InsereNaPagina(Ap, *RegRetorno, *ApRetorno);//Regretorno é um valor que tava mais baixo e ta subindo
+        InsereNaPagina(Ap, *RegRetorno, *ApRetorno, cont_pre);//Regretorno é um valor que tava mais baixo e ta subindo
     }
     else 
     {
-        InsereNaPagina(ApTemp, *RegRetorno, *ApRetorno);
+        InsereNaPagina(ApTemp, *RegRetorno, *ApRetorno, cont_pre);
     }
 
     /*esse for faz com que um elemento dos maiores seja levado para a proxima pagina */
    /*é obrigatorio ser dos maiores, pois os menores continuam na mesma*/
     for(j = M + 2; j <= 2 * M; j++)
-        InsereNaPagina(ApTemp, Ap->r[j-1], Ap->p[j]);
+        InsereNaPagina(ApTemp, Ap->r[j-1], Ap->p[j], cont_pre);
                 /*apontador aptemp-> recebendo o mais a direita(pode ser null)*/
     Ap->n = M; ApTemp->p[0] = Ap->p[M + 1]; /*ApTemp se trata da nova pagina. Ap é a anterior que fica com tamain M*/
     //Esse Ap->n aqui em cima recebe recebe o tamanho da metade, já que foi dividido no meio
@@ -133,12 +147,12 @@ void Ins(TipoRegistro Reg, TipoApontador Ap, short *Cresceu,
 }
 
 // Função principal de inserção
-void Insere(TipoRegistro Reg, TipoApontador* Ap) {
+void Insere(TipoRegistro Reg, TipoApontador* Ap, int* nTransferencias_pre, int* cont_pre) {
     short Cresceu;
     TipoRegistro RegRetorno;
     TipoPagina *ApRetorno, *ApTemp;
 
-    Ins(Reg, *Ap, &Cresceu, &RegRetorno, &ApRetorno);
+    Ins(Reg, *Ap, &Cresceu, &RegRetorno, &ApRetorno, nTransferencias_pre, cont_pre);
 
     if (Cresceu) {
         ApTemp = (TipoPagina*) malloc(sizeof(TipoPagina));
@@ -150,7 +164,8 @@ void Insere(TipoRegistro Reg, TipoApontador* Ap) {
     //No final aptemp é atualizado com o novo endereço da raiz que foi criado
 }
 
-bool Pesquisa(TipoRegistro* x, TipoApontador Ap) {
+bool Pesquisa(TipoRegistro* x, TipoApontador Ap, int* cont_pes) {
+    auto tempoInicioPes = high_resolution_clock::now();
     if (Ap == nullptr) {
         return false; // Chave não encontrada
     }
@@ -158,24 +173,32 @@ bool Pesquisa(TipoRegistro* x, TipoApontador Ap) {
     long i = 1; // Inicialização de i
 
     // Pesquisa sequencial para encontrar o intervalo desejado
+    (*cont_pes)++;
     while (i < Ap->n && x->Chave > Ap->r[i - 1].Chave) {
         nComparacoes_pes++;
         i++;
+        (*cont_pes)++;
     }
 
+    (*cont_pes)++;
     if (x->Chave == Ap->r[i - 1].Chave) {
         nComparacoes_pes++;
         *x = Ap->r[i - 1]; // Registro encontrado
         return true;
     }
 
+    (*cont_pes)++;
     if (x->Chave < Ap->r[i - 1].Chave) {
+
+        return Pesquisa(x, Ap->p[i - 1], cont_pes); // Pesquisa no filho à esquerda
+
         nComparacoes_pes++;
-        return Pesquisa(x, Ap->p[i - 1]); // Pesquisa no filho à esquerda
+
+
     } 
     else
     {
-        return Pesquisa(x, Ap->p[i]); // Pesquisa no filho à direita
+        return Pesquisa(x, Ap->p[i], cont_pes); // Pesquisa no filho à direita
     }
 }
 
@@ -213,43 +236,52 @@ void freeArvore(TipoApontador Ap) {
 int main() {
     TipoApontador raiz = nullptr;
     TipoRegistro reg;
+    int cont_pes = 0, nTransferencias_pes = 0, cont_pre = 0, nTransferencias_pre = 0;
 
     // Inserindo alguns registros na árvore
     reg.Chave = 10;
-    Insere(reg, &raiz);
+
+    auto tempoInicioProc = high_resolution_clock::now();
+
+    Insere(reg, &raiz, &nTransferencias_pre, &cont_pre);
 
     reg.Chave = 20;
-    Insere(reg, &raiz);
+    Insere(reg, &raiz, &nTransferencias_pre, &cont_pre);
 
     reg.Chave = 5;
-    Insere(reg, &raiz);
+    Insere(reg, &raiz, &nTransferencias_pre, &cont_pre);
 
     reg.Chave = 15;
-    Insere(reg, &raiz);
+    Insere(reg, &raiz, &nTransferencias_pre, &cont_pre);
 
     reg.Chave = 25;
-    Insere(reg, &raiz);
+    Insere(reg, &raiz, &nTransferencias_pre, &cont_pre);
 
     // Inserindo mais chaves para testar a divisão de nós
     reg.Chave = 30;
-    Insere(reg, &raiz);
+    Insere(reg, &raiz, &nTransferencias_pre, &cont_pre);
 
     reg.Chave = 35;
-    Insere(reg, &raiz);
+    Insere(reg, &raiz, &nTransferencias_pre, &cont_pre);
 
     reg.Chave = 40;
-    Insere(reg, &raiz);
+    Insere(reg, &raiz, &nTransferencias_pre, &cont_pre);
 
     reg.Chave = 45;
-    Insere(reg, &raiz);
+    Insere(reg, &raiz, &nTransferencias_pre, &cont_pre);
 
     reg.Chave = 50;
-    Insere(reg, &raiz);
+    Insere(reg, &raiz, &nTransferencias_pre, &cont_pre);
+
+
+    auto tempoFimProc = high_resolution_clock::now();
+    auto tempoFimPes = high_resolution_clock::now();
 
     
     reg.Chave = 36;
     if(Pesquisa(&reg, raiz))
     
+
     // Imprimindo a árvore
     cout << "Estrutura da arvore B após inserções adicionais:" << endl;
     imprimirArvore(raiz);
@@ -269,5 +301,24 @@ int main() {
     
     // Liberando a memória da árvore
     freeArvore(raiz);
+
+    cout << "Arvore liberada da memoria." << endl;
+
+    auto tempoProcessamento = duration_cast<milliseconds>(tempoFimProc - tempoInicioProc);
+    auto tempoPesquisa = duration_cast<milliseconds>(tempoFimPes - tempoInicioProc);
+
+    cout << "\nPRÉ-PROCESSAMENTO -------" << endl;
+    cout << "Número de transferências: " << nTransferencias_pre << endl;
+    cout << "Comparacoes realizadas: " << cont_pre << endl;
+    cout << "Tempo de pre-processamento: " << tempoProcessamento.count() << "ms" << endl;
+    cout << "\n";
+    cout << "PESQUISA ----------------" << endl;
+    cout << "Número de transferências: " << nTransferencias_pes << endl;
+    cout << "Comparacoes realizadas: " << cont_pes << endl;
+    cout << "Tempo de pesquisa: " << tempoPesquisa.count() << "ms" << endl;
+
+
+
+
     return 0;
 }   

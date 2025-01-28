@@ -1,7 +1,10 @@
 #include <iostream>
 #include <stdlib.h>
+#include <chrono>
 
 using namespace std;
+using namespace chrono;
+
 
 typedef struct {
     int chave;
@@ -15,14 +18,14 @@ typedef struct {
     long int filho_esq;
 } TipoNo;
 
-bool adicionaNo(FILE *arq_saida, TipoNo *no, TipoNo *no_pai, bool insere, int *numero_de_nos);
+bool adicionaNo(FILE *arq_saida, TipoNo *no, TipoNo *no_pai, bool insere, int *numero_de_nos, int *nTransferencias_pre,  int *cont_pre);
 
 int main(int argc, char *argv[]) {
     
     FILE *arq_entrada, *arq_saida;
     TipoRegistro *registro;
     TipoNo *no, *no_pai;
-    int numero_de_nos = 0;
+    int numero_de_nos = 0, nTransferencias_pre = 0, cont_pre = 0;
     bool arvore_esta_vazia = true;
 
     no = (TipoNo*) malloc(sizeof(TipoNo));
@@ -39,21 +42,28 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     
+    auto tempoInicioProc = high_resolution_clock::now();
+
+    nTransferencias_pre++;
     while( fread(registro, sizeof(TipoRegistro), 1, arq_entrada) ) {
 
         no->registro = *registro;
         no->filho_dir = -1;
         no->filho_esq = -1;
 
-        adicionaNo(arq_saida, no, no_pai, arvore_esta_vazia, &numero_de_nos);
+        adicionaNo(arq_saida, no, no_pai, arvore_esta_vazia, &numero_de_nos, &nTransferencias_pre, &cont_pre);
 
         fseek(arq_saida, 0, SEEK_SET); // retorna para o comeco do arq_saida para ler o no pai
+        nTransferencias_pre++;
         fread(no_pai, sizeof(TipoNo), 1, arq_saida);
         fseek(arq_saida, 0, SEEK_SET); // retorna para o inicio da arvore para iniciar processo recursivo
         
         arvore_esta_vazia = false;
 
+        nTransferencias_pre++;
     }
+
+    auto tempoFimProc = high_resolution_clock::now();
 
     fclose(arq_entrada);
     fclose(arq_saida);
@@ -61,11 +71,21 @@ int main(int argc, char *argv[]) {
     free(no_pai);
     free(registro);
 
+    auto tempoProcessamento = duration_cast<milliseconds>(tempoFimProc - tempoInicioProc);
+
     cout << "Numero de nos: "<< numero_de_nos << endl;
+    cout << "\nPRÉ-PROCESSAMENTO -------" << endl;
+    cout << "Número de transferências: " << nTransferencias_pre << endl;
+    cout << "Comparacoes realizadas: " << cont_pre << endl;
+    cout << "Tempo de pre-processamento: " << tempoProcessamento.count() << "ms" << endl;
+
+    /*TEMPO DE PRE-PROCESSAMENTO*/
+    cout << "\n";
+
 
 }
 
-bool adicionaNo(FILE *arq_saida, TipoNo *no, TipoNo *no_pai, bool insere, int *numero_de_nos) {
+bool adicionaNo(FILE *arq_saida, TipoNo *no, TipoNo *no_pai, bool insere, int *numero_de_nos, int *nTransferencias_pre, int *cont_pre) {
 
     if(insere) { // arq_saida esta vazio ou alcancou registro com filho vago
          
@@ -74,33 +94,38 @@ bool adicionaNo(FILE *arq_saida, TipoNo *no, TipoNo *no_pai, bool insere, int *n
         return true;
 
     } else {
-        
+        (*cont_pre)++;
         if (no->registro.chave < no_pai->registro.chave) { // filho menor que pai
             
             if(no_pai->filho_esq == -1) {
                 no_pai->filho_esq = *numero_de_nos;
                 fwrite(no_pai, sizeof(TipoNo), 1, arq_saida);
                 fseek(arq_saida, 0, SEEK_END);
-                return adicionaNo(arq_saida, no, no_pai, true, numero_de_nos);
+                return adicionaNo(arq_saida, no, no_pai, true, numero_de_nos, nTransferencias_pre, cont_pre);
             } else {
                 fseek(arq_saida, (no_pai->filho_esq * sizeof(TipoNo)), SEEK_SET);
+                (*nTransferencias_pre)++;
                 fread(no_pai, sizeof(TipoNo), 1, arq_saida); // reseta no_pai para o primeiro no da arvore
                 fseek(arq_saida, - (1 * sizeof(TipoNo)), SEEK_CUR);
-                return adicionaNo(arq_saida, no, no_pai, false, numero_de_nos);
+                return adicionaNo(arq_saida, no, no_pai, false, numero_de_nos, nTransferencias_pre, cont_pre);
             }
 
-        } else if (no->registro.chave > no_pai->registro.chave) {
+        } else { 
+            (*cont_pre)++;
+            if (no->registro.chave > no_pai->registro.chave) {
             
-            if(no_pai->filho_dir == -1) {
-                no_pai->filho_dir = *numero_de_nos;
-                fwrite(no_pai, sizeof(TipoNo), 1, arq_saida);  
-                fseek(arq_saida, 0, SEEK_END);
-                return adicionaNo(arq_saida, no, no_pai, true, numero_de_nos);
-            } else {
-                fseek(arq_saida, (no_pai->filho_dir * sizeof(TipoNo)), SEEK_SET);
-                fread(no_pai, sizeof(TipoNo), 1, arq_saida); // reseta no_pai para o primeiro no da arvore
-                fseek(arq_saida, - (1 * sizeof(TipoNo)), SEEK_CUR);
-                return adicionaNo(arq_saida, no, no_pai, false, numero_de_nos);
+                if(no_pai->filho_dir == -1) {
+                    no_pai->filho_dir = *numero_de_nos;
+                    fwrite(no_pai, sizeof(TipoNo), 1, arq_saida);  
+                    fseek(arq_saida, 0, SEEK_END);
+                    return adicionaNo(arq_saida, no, no_pai, true, numero_de_nos, nTransferencias_pre, cont_pre);
+                } else {
+                    fseek(arq_saida, (no_pai->filho_dir * sizeof(TipoNo)), SEEK_SET);
+                    (*nTransferencias_pre)++;
+                    fread(no_pai, sizeof(TipoNo), 1, arq_saida); // reseta no_pai para o primeiro no da arvore
+                    fseek(arq_saida, - (1 * sizeof(TipoNo)), SEEK_CUR);
+                    return adicionaNo(arq_saida, no, no_pai, false, numero_de_nos, nTransferencias_pre, cont_pre);
+                }
             }
         }      
     }
