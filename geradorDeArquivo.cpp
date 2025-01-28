@@ -86,7 +86,7 @@ int main (int argc, char *argv[]) {
 
     } else if(arqTipo == "-d") {
 
-        if ( (arqEscrita = fopen("registrosDescrescente.bin", "wb")) == NULL ) 
+        if ( (arqEscrita = fopen("registrosDecrescente.bin", "wb")) == NULL ) 
             cout << "\nErro na criacao do arquivo.\n";
         else
             geraArqDecrescente(N, arqEscrita);
