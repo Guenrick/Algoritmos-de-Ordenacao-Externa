@@ -41,24 +41,29 @@ bool pesquisaArvoreBinaria(int chave, FILE *arqEntrada, int *nTransferencias_pes
 
 int main(int argc, char* argv[]) {
     FILE* arqEntrada = fopen(argv[1], "rb");
-    cout << "Digite a chave para busca: \n";
     int c,  cont_pes = 0, nTransferencias_pes = 0;
+    cout << "Digite a chave para busca: \n";
     cin >> c;
 
-    auto tempoInicio = high_resolution_clock::now();
+    auto tempoInicioPes = high_resolution_clock::now();
 
-    if(pesquisaArvoreBinaria(c, arqEntrada, &nTransferencias_pes, &cont_pes)) 
-        cout << "Chave encontrada!";
-    else 
-        cout << "Não foi possivel achar a chave.";
     
-    auto tempoFim = high_resolution_clock::now();
-    auto tempoExecucao = duration_cast<milliseconds>(tempoFim - tempoInicio);
+    if(pesquisaArvoreBinaria(c, arqEntrada, &nTransferencias_pes, &cont_pes)){ 
+        cout << "Chave encontrada!";
+    }
+    else {
+        cout << "Não foi possivel achar a chave.";
+    }
+    
+    auto tempoFimPes = high_resolution_clock::now();
+    
+    auto tempoPesquisa = duration_cast<milliseconds>(tempoFimPes - tempoInicioPes);
+
     cout << "PESQUISA ----------------" << endl;
     cout << "Número de transferências: " << nTransferencias_pes << endl;
     cout << "Comparacoes realizadas: " << cont_pes << endl;
-    /*TEMPO DE PRE-PROCESSAMENTO*/
-    cout << "\nTempo de pesquisa: " << tempoExecucao.count() << "ms\n";
+    cout << "Tempo de pesquisa: " << tempoPesquisa.count() << "ms" << endl;
+
     return 0;
     
 }

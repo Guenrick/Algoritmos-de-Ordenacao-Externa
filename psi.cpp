@@ -76,13 +76,11 @@ int main(int argc, char *argv[]) {
     cout << "Número de transferências: " << nTransferencias_pre << endl;
     cout << "Comparacoes realizadas: " << cont << endl;
     cout << "Tempo de pre-processamento: " << tempoProcessamento.count() << "ms" << endl;
-    /*TEMPO DE PRE-PROCESSAMENTO*/
     cout << "\n";
     cout << "PESQUISA ----------------" << endl;
     cout << "Número de transferências: " << nTransferencias_pes << endl;
     cout << "Comparacoes realizadas: " << cont << endl;
     cout << "Tempo de pesquisa: " << tempoPesquisa.count() << "ms" << endl;
-    /*TEMPO DE PRE-PROCESSAMENTO*/
 
     return 0;
 }

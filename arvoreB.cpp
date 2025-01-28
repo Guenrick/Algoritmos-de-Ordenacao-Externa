@@ -1,5 +1,9 @@
 #include <iostream>
+#include <chrono>
+
 using namespace std;
+using namespace chrono;
+
 #define M 2// Ordem mínima (t)
 
 // Definição das estruturas
@@ -154,6 +158,7 @@ void Insere(TipoRegistro Reg, TipoApontador* Ap, int* nTransferencias_pre, int* 
 }
 
 bool Pesquisa(TipoRegistro* x, TipoApontador Ap, int* cont_pes) {
+    auto tempoInicioPes = high_resolution_clock::now();
     if (Ap == nullptr) {
         return false; // Chave não encontrada
     }
@@ -221,6 +226,9 @@ int main() {
 
     // Inserindo alguns registros na árvore
     reg.Chave = 10;
+
+    auto tempoInicioProc = high_resolution_clock::now();
+
     Insere(reg, &raiz, &nTransferencias_pre, &cont_pre);
 
     reg.Chave = 20;
@@ -251,6 +259,8 @@ int main() {
     reg.Chave = 50;
     Insere(reg, &raiz, &nTransferencias_pre, &cont_pre);
 
+    auto tempoFimProc = high_resolution_clock::now();
+    auto tempoFimPes = high_resolution_clock::now();
     // Imprimindo a árvore
     cout << "Estrutura da arvore B após inserções adicionais:" << endl;
     imprimirArvore(raiz);
@@ -259,15 +269,19 @@ int main() {
     freeArvore(raiz);
     cout << "Arvore liberada da memoria." << endl;
 
-    
+    auto tempoProcessamento = duration_cast<milliseconds>(tempoFimProc - tempoInicioProc);
+    auto tempoPesquisa = duration_cast<milliseconds>(tempoFimPes - tempoInicioProc);
+
     cout << "\nPRÉ-PROCESSAMENTO -------" << endl;
     cout << "Número de transferências: " << nTransferencias_pre << endl;
     cout << "Comparacoes realizadas: " << cont_pre << endl;
-    /* TEMPO */
+    cout << "Tempo de pre-processamento: " << tempoProcessamento.count() << "ms" << endl;
+    cout << "\n";
     cout << "PESQUISA ----------------" << endl;
     cout << "Número de transferências: " << nTransferencias_pes << endl;
     cout << "Comparacoes realizadas: " << cont_pes << endl;
-    /*TEMPO DE PRE-PROCESSAMENTO*/
+    cout << "Tempo de pesquisa: " << tempoPesquisa.count() << "ms" << endl;
+
 
     return 0;
 }

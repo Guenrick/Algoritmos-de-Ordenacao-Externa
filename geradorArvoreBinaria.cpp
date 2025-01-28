@@ -1,7 +1,10 @@
 #include <iostream>
 #include <stdlib.h>
+#include <chrono>
 
 using namespace std;
+using namespace chrono;
+
 
 typedef struct {
     int chave;
@@ -39,6 +42,8 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     
+    auto tempoInicioProc = high_resolution_clock::now();
+
     nTransferencias_pre++;
     while( fread(registro, sizeof(TipoRegistro), 1, arq_entrada) ) {
 
@@ -58,16 +63,22 @@ int main(int argc, char *argv[]) {
         nTransferencias_pre++;
     }
 
+    auto tempoFimProc = high_resolution_clock::now();
+
     fclose(arq_entrada);
     fclose(arq_saida);
     free(no);
     free(no_pai);
     free(registro);
 
+    auto tempoProcessamento = duration_cast<milliseconds>(tempoFimProc - tempoInicioProc);
+
     cout << "Numero de nos: "<< numero_de_nos << endl;
     cout << "\nPRÉ-PROCESSAMENTO -------" << endl;
     cout << "Número de transferências: " << nTransferencias_pre << endl;
     cout << "Comparacoes realizadas: " << cont_pre << endl;
+    cout << "Tempo de pre-processamento: " << tempoProcessamento.count() << "ms" << endl;
+
     /*TEMPO DE PRE-PROCESSAMENTO*/
     cout << "\n";
 
