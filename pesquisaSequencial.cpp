@@ -10,16 +10,15 @@ bool buscaBinaria(TipoRegistro pagina[], int qtdItens, int chave, int pEsq, int 
         return false;
 
     (*cont)++;
-    if(chave > pagina[pMeio].chave)
+    if(chave > pagina[pMeio].chave) {
         pEsq = pMeio + 1;
-    else 
         (*cont)++;
-        if (chave < pagina[pMeio].chave)
-            pDir = pMeio - 1;
-        else if (chave == pagina[pMeio].chave) {
+    } else if (chave < pagina[pMeio].chave) 
+        pDir = pMeio - 1;
+    else if (chave == pagina[pMeio].chave) {
         *registro = pagina[pMeio];
         return true;
-        }
+    }
 
     pMeio = (pDir + pEsq) / 2;
 
