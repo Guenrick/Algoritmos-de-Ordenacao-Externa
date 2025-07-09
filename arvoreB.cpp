@@ -56,7 +56,7 @@ void InsereNaPagina(TipoApontador Ap, TipoRegistro Reg, TipoApontador ApDir, int
 
 /* Função auxiliar para inserção. Aqui ela basicamente percorre
 a arvore inteira procurando um lugar para inserir o 
-RegChave */
+RegChave. */
 void Ins(TipoRegistro Reg, TipoApontador Ap, short *Cresceu, 
          TipoRegistro *RegRetorno, TipoApontador *ApRetorno, int* nTransferencias_pre, int* cont_pre) 
 {
